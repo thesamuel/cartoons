@@ -3,12 +3,14 @@
 # &cartoonist=Regular&datefrom=2018-01-01&orderby=publicationdate&sortorder=desc
 # &totalcount=0&submit=Search
 
-import requests
+import json
+import os
+from pathlib import Path
 from typing import Optional
+
+import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
-import json
-from pathlib import Path
 
 _ID_FILE = "cartoon_ids.txt"
 _DATA_PATH = Path("./data")
@@ -24,16 +26,21 @@ def cartoon_request(cid: int) -> BeautifulSoup:
     return soup
 
 
+def parse_description(soup: BeautifulSoup, header: str) -> Optional[str]:
+    header_soup = soup.find(text=header + ":")
+    if not header_soup:
+        return None
+    description = header_soup.find_parent().next_sibling
+    if not description:
+        return None
+    return description.strip()
+
+
 def parse_metadata(soup: BeautifulSoup) -> Optional[dict]:
     image_url = soup.find("img", {"name": "Toon"})["src"]
-    title, keywords, caption = (soup.find(text=h + ":")
-                                    .find_parent()
-                                    .next_sibling
-                                    .strip()
-                                for h in _METADATA_HEADERS)
-    keywords = keywords.split(", ")
-    return {"title": title, "keywords": keywords,
-            "caption": caption, "image_url": image_url}
+    title, keywords, caption = (parse_description(soup, h) for h in _METADATA_HEADERS)
+    keywords = keywords.split(", ") if keywords else None
+    return {"title": title, "keywords": keywords, "caption": caption, "image_url": image_url}
 
 
 def save(id: int, metadata: dict):
@@ -49,7 +56,7 @@ def save(id: int, metadata: dict):
 
 
 def parse():
-    downloaded_ids = set()
+    downloaded_ids = set(os.path.splitext(filename)[0] for filename in os.listdir(_DATA_PATH))
 
     with open(_ID_FILE, 'r') as f:
         lines = f.readlines()
