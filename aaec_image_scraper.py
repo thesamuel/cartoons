@@ -6,10 +6,13 @@
 import requests
 from typing import Optional
 from bs4 import BeautifulSoup
-import re
 from tqdm import tqdm
+import json
+from pathlib import Path
 
 _IN_FILE = "cartoon_ids.txt"
+_DATA_PATH = Path("./data")
+
 _BASE_URL = "http://editorialcartoonists.com/cartoon/display.cfm/"
 _METADATA_HEADERS = ("Cartoon Title", "Keywords", "Caption")
 
@@ -32,20 +35,48 @@ def parse_metadata(soup: BeautifulSoup) -> Optional[dict]:
     return {"title": title, "keywords": keywords, "caption": caption, "image_url": image_url}
 
 
+def save(id: int, metadata: dict):
+    # Save image
+    image_path = _DATA_PATH / f"{id}.jpg"
+    with open(image_path, 'wb') as f:
+        f.write(requests.get(metadata["image_url"]).content)
+
+    # Save metadata
+    metadata_path = _DATA_PATH / f"{id}.json"
+    with open(metadata_path, 'w') as f:
+        json.dump(metadata, f)
+
+
 def parse():
+    downloaded_ids = set()
+
     with open(_IN_FILE, 'r') as f:
-        for line in f:
-            if line.startswith('#'):
-                continue
+        try:
+            for line in f:
+                # Ignore comments
+                if line.startswith('#'):
+                    continue
 
-            cid = line.strip()
-            if not cid:
-                continue
+                # Ignore blank lines
+                cid = line.strip()
+                if not cid:
+                    continue
 
-            cid = int(cid)
-            soup = cartoon_request(cid)
+                # Ignore duplicated ids
+                if cid in downloaded_ids:
+                    print(cid, "already downloaded; skipping")
+                    continue
 
-            metadata = parse_metadata(soup)
+                # Download cartoon webpage
+                cid = int(cid)
+                soup = cartoon_request(cid)
+
+                # Parse and save cartoon
+                metadata = parse_metadata(soup)
+                save(cid, metadata)
+        except:
+            print("AAEC image scraper crashed; printing already downloaded ids")
+            print(downloaded_ids)
 
 
 if __name__ == "__main__":
