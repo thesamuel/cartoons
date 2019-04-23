@@ -76,6 +76,7 @@ def parse():
                 # Parse and save cartoon
                 metadata = parse_metadata(soup)
                 save(cid, metadata)
+                downloaded_ids.add(cid)
         except:
             print("AAEC image scraper crashed; printing already downloaded ids")
             print(downloaded_ids)
