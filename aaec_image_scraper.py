@@ -52,8 +52,9 @@ def parse():
     downloaded_ids = set()
 
     with open(_ID_FILE, 'r') as f:
+        lines = f.readlines()
         try:
-            for line in tqdm(f):
+            for line in tqdm(lines):
                 # Ignore comments
                 if line.startswith('#'):
                     continue
