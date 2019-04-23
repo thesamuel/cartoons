@@ -13,6 +13,7 @@ _SEARCH_PAYLOAD = {"membertype": "Regular",
 
 _CARTOON_URL_REGEX = re.compile(r'/cartoon/display.cfm/[0-9]*/')
 _TOTAL_COUNT_URL_REGEX = re.compile(r'totalcount')
+_TOTAL_COUNT_PARAM_REGEX = re.compile(r'totalcount=([0-9]*)')
 
 
 def parse_cartoon_urls(soup: BeautifulSoup):
@@ -22,8 +23,8 @@ def parse_cartoon_urls(soup: BeautifulSoup):
 
 
 def parse_total_count(soup: BeautifulSoup):
-    match = soup.find('a', href=_TOTAL_COUNT_URL_REGEX)
-    match['href']
+    total_count_url = soup.find('a', href=_TOTAL_COUNT_URL_REGEX)
+    return int(_TOTAL_COUNT_PARAM_REGEX.search(total_count_url['href']).groups()[0])
 
 
 def parse():
