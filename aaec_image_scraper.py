@@ -10,7 +10,7 @@ from tqdm import tqdm
 import json
 from pathlib import Path
 
-_IN_FILE = "cartoon_ids.txt"
+_ID_FILE = "cartoon_ids.txt"
 _DATA_PATH = Path("./data")
 
 _BASE_URL = "http://editorialcartoonists.com/cartoon/display.cfm/"
@@ -32,7 +32,8 @@ def parse_metadata(soup: BeautifulSoup) -> Optional[dict]:
                                     .strip()
                                 for h in _METADATA_HEADERS)
     keywords = keywords.split(", ")
-    return {"title": title, "keywords": keywords, "caption": caption, "image_url": image_url}
+    return {"title": title, "keywords": keywords,
+            "caption": caption, "image_url": image_url}
 
 
 def save(id: int, metadata: dict):
@@ -50,9 +51,9 @@ def save(id: int, metadata: dict):
 def parse():
     downloaded_ids = set()
 
-    with open(_IN_FILE, 'r') as f:
+    with open(_ID_FILE, 'r') as f:
         try:
-            for line in f:
+            for line in tqdm(f):
                 # Ignore comments
                 if line.startswith('#'):
                     continue
