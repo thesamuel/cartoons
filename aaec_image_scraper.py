@@ -8,7 +8,7 @@ import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 
-_NUM_THREADS = 16
+_NUM_THREADS = 100
 
 _ID_FILE = "cartoon_ids.txt"
 _DATA_PATH = Path("./data")
