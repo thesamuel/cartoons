@@ -4,6 +4,7 @@
 # &totalcount=0&submit=Search
 
 import json
+from multiprocessing.pool import ThreadPool
 import os
 from pathlib import Path
 from typing import Optional
@@ -11,6 +12,8 @@ from typing import Optional
 import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
+
+_NUM_THREADS = 16
 
 _ID_FILE = "cartoon_ids.txt"
 _DATA_PATH = Path("./data")
@@ -55,35 +58,28 @@ def save(id: int, metadata: dict):
         json.dump(metadata, f)
 
 
+def download_cartoon(cid: int):
+    # Parse and save cartoon
+    soup = cartoon_request(cid)
+    metadata = parse_metadata(soup)
+    save(cid, metadata)
+
+
 def parse():
-    downloaded_ids = set(os.path.splitext(filename)[0] for filename in os.listdir(_DATA_PATH))
+    # Get all cartoon ids from file
+    lines = tuple(open(_ID_FILE, 'r'))
+    cartoon_ids = set(int(line.strip()) for line in lines
+                      if line.strip() and not line.startswith('#'))
 
-    with open(_ID_FILE, 'r') as f:
-        lines = f.readlines()
-        for line in tqdm(lines):
-            # Ignore comments
-            if line.startswith('#'):
-                tqdm.write(line)
-                continue
+    # Remove all previously downloaded ids
+    downloaded_ids = set(int(os.path.splitext(filename)[0]) for filename in os.listdir(_DATA_PATH))
+    cartoon_ids -= downloaded_ids
 
-            # Ignore blank lines
-            cid = line.strip()
-            if not cid:
-                continue
-
-            # Ignore duplicated ids
-            if cid in downloaded_ids:
-                tqdm.write(cid, "already downloaded; skipping")
-                continue
-
-            # Download cartoon webpage
-            cid = int(cid)
-            soup = cartoon_request(cid)
-
-            # Parse and save cartoon
-            metadata = parse_metadata(soup)
-            save(cid, metadata)
-            downloaded_ids.add(cid)
+    # Download cartoons concurrently
+    pool = ThreadPool(_NUM_THREADS)
+    with tqdm(total=len(cartoon_ids)) as t:
+        for _ in pool.imap_unordered(download_cartoon, cartoon_ids):
+            t.update(1)
 
 
 if __name__ == "__main__":
