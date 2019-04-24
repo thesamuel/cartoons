@@ -1,8 +1,3 @@
-# Example URL:
-# http://editorialcartoonists.com/cartoon/browse.cfm/?membertype=Regular
-# &cartoonist=Regular&datefrom=2018-01-01&orderby=publicationdate&sortorder=desc
-# &totalcount=0&submit=Search
-
 import json
 from multiprocessing.pool import ThreadPool
 import os
@@ -22,13 +17,6 @@ _BASE_URL = "http://editorialcartoonists.com/cartoon/display.cfm/"
 _METADATA_HEADERS = ("Cartoon Title", "Keywords", "Caption")
 
 
-def cartoon_request(cid: int) -> BeautifulSoup:
-    cartoon_url = _BASE_URL + str(cid)
-    r = requests.get(cartoon_url)
-    soup = BeautifulSoup(r.content, 'html.parser')
-    return soup
-
-
 def parse_description(soup: BeautifulSoup, header: str) -> Optional[str]:
     header_soup = soup.find(text=header + ":")
     if not header_soup:
@@ -46,28 +34,32 @@ def parse_metadata(soup: BeautifulSoup) -> Optional[dict]:
     return {"title": title, "keywords": keywords, "caption": caption, "image_url": image_url}
 
 
-def save(id: int, metadata: dict):
+def download_cartoon(cid: int):
+    # Request cartoon page
+    cartoon_url = _BASE_URL + str(cid)
+    r = requests.get(cartoon_url)
+    soup = BeautifulSoup(r.content, 'html.parser')
+
+    # Parse metadata from cartoon page
+    metadata = parse_metadata(soup)
+
+    # Download cartoon image
+    image = requests.get(metadata["image_url"]).content
+
     # Save image
-    image_path = _DATA_PATH / f"{id}.jpg"
+    image_path = _DATA_PATH / f"{cid}.jpg"
     with open(image_path, 'wb') as f:
-        f.write(requests.get(metadata["image_url"]).content)
+        f.write(image)
 
     # Save metadata
-    metadata_path = _DATA_PATH / f"{id}.json"
+    metadata_path = _DATA_PATH / f"{cid}.json"
     with open(metadata_path, 'w') as f:
         json.dump(metadata, f)
 
 
-def download_cartoon(cid: int):
-    # Parse and save cartoon
-    soup = cartoon_request(cid)
-    metadata = parse_metadata(soup)
-    save(cid, metadata)
-
-
-def parse():
+def download_cartoons_from_file(filename: str):
     # Get all cartoon ids from file
-    lines = tuple(open(_ID_FILE, 'r'))
+    lines = tuple(open(filename, 'r'))
     cartoon_ids = set(int(line.strip()) for line in lines
                       if line.strip() and not line.startswith('#'))
 
@@ -83,4 +75,4 @@ def parse():
 
 
 if __name__ == "__main__":
-    parse()
+    download_cartoons_from_file(_ID_FILE)
