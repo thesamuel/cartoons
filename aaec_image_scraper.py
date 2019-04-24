@@ -60,33 +60,30 @@ def parse():
 
     with open(_ID_FILE, 'r') as f:
         lines = f.readlines()
-        try:
-            for line in tqdm(lines):
-                # Ignore comments
-                if line.startswith('#'):
-                    continue
+        for line in tqdm(lines):
+            # Ignore comments
+            if line.startswith('#'):
+                tqdm.write(line)
+                continue
 
-                # Ignore blank lines
-                cid = line.strip()
-                if not cid:
-                    continue
+            # Ignore blank lines
+            cid = line.strip()
+            if not cid:
+                continue
 
-                # Ignore duplicated ids
-                if cid in downloaded_ids:
-                    print(cid, "already downloaded; skipping")
-                    continue
+            # Ignore duplicated ids
+            if cid in downloaded_ids:
+                tqdm.write(cid, "already downloaded; skipping")
+                continue
 
-                # Download cartoon webpage
-                cid = int(cid)
-                soup = cartoon_request(cid)
+            # Download cartoon webpage
+            cid = int(cid)
+            soup = cartoon_request(cid)
 
-                # Parse and save cartoon
-                metadata = parse_metadata(soup)
-                save(cid, metadata)
-                downloaded_ids.add(cid)
-        except:
-            print("AAEC image scraper crashed; printing already downloaded ids")
-            print(downloaded_ids)
+            # Parse and save cartoon
+            metadata = parse_metadata(soup)
+            save(cid, metadata)
+            downloaded_ids.add(cid)
 
 
 if __name__ == "__main__":
