@@ -7,9 +7,11 @@ from typing import Optional
 
 import requests
 from bs4 import BeautifulSoup
-from tqdm import tqdm
+from tqdm import tqdm, trange
 
 _NUM_THREADS = 100
+_BATCH_SIZE = 400
+_SLEEP_SECONDS = 15
 
 _ID_FILE = "cartoon_ids.txt"
 _DATA_PATH = Path("./data")
@@ -77,7 +79,7 @@ def batches(l, n):
         yield l[i:i + n]
 
 
-def download_batch(cartoon_ids: set):
+def download_batch(cartoon_ids: list):
     pool = ThreadPool(_NUM_THREADS)
     with tqdm(total=len(cartoon_ids), desc="Downloading cartoons") as t:
         num_errors = 0
@@ -99,9 +101,10 @@ def download_cartoons_from_file(filename: str):
     downloaded_ids = set(int(os.path.splitext(filename)[0]) for filename in os.listdir(_DATA_PATH))
     cartoon_ids = list(cartoon_ids - downloaded_ids)
 
-    for batch in batches(cartoon_ids, 500):
-        download_batch(batch)
-        time.sleep(15)
+    for i in trange(0, len(cartoon_ids), _BATCH_SIZE, desc="Batch"):
+        download_batch(cartoon_ids[i:i + _BATCH_SIZE])
+        tqdm.write(f"Sleeping for {_SLEEP_SECONDS} seconds...")
+        time.sleep(_SLEEP_SECONDS)
 
 
 if __name__ == "__main__":
