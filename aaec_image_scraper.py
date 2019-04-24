@@ -9,8 +9,8 @@ import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm, trange
 
-_NUM_THREADS = 20
-_BATCH_SIZE = 100
+_NUM_THREADS = 100
+_BATCH_SIZE = 400
 _SLEEP_SECONDS = 5
 
 _ID_FILE = "cartoon_ids.txt"
@@ -18,8 +18,7 @@ _DATA_PATH = Path("./data")
 
 _BASE_URL = "http://editorialcartoonists.com/cartoon/display.cfm/"
 _METADATA_HEADERS = ("Cartoon Title", "Keywords", "Caption")
-_BLACKLIST = set([4890, 4891, 3539, 2400, 3537, 4889, 4892, 5985, 2259, 5987, 4886])
-_TIMEOUT = 10
+_TIMEOUT = 15
 
 
 def parse_description(soup: BeautifulSoup, header: str) -> Optional[str]:
@@ -101,7 +100,7 @@ def download_cartoons_from_file(filename: str):
 
     # Remove all previously downloaded ids
     downloaded_ids = set(int(os.path.splitext(filename)[0]) for filename in os.listdir(_DATA_PATH))
-    cartoon_ids = list(cartoon_ids - downloaded_ids - _BLACKLIST)
+    cartoon_ids = list(cartoon_ids - downloaded_ids)
 
     for i in trange(0, len(cartoon_ids), _BATCH_SIZE, desc="Batch"):
         download_batch(cartoon_ids[i:i + _BATCH_SIZE])
