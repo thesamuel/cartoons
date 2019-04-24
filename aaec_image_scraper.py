@@ -1,6 +1,6 @@
 import json
-from multiprocessing.pool import ThreadPool
 import os
+from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from typing import Optional
 
@@ -46,15 +46,21 @@ def download_cartoon(cid: int):
     # Download cartoon image
     image = requests.get(metadata["image_url"]).content
 
-    # Save image
+    # Save files
     image_path = _DATA_PATH / f"{cid}.jpg"
-    with open(image_path, 'wb') as f:
-        f.write(image)
-
-    # Save metadata
     metadata_path = _DATA_PATH / f"{cid}.json"
-    with open(metadata_path, 'w') as f:
-        json.dump(metadata, f)
+    try:
+        with open(image_path, 'wb') as f:
+            f.write(image)
+        with open(metadata_path, 'w') as f:
+            json.dump(metadata, f)
+    except KeyboardInterrupt:
+        print("Removing any partially-saved files")
+        try:
+            os.remove(image_path)
+            os.remove(metadata_path)
+        except OSError:
+            pass
 
 
 def download_cartoons_from_file(filename: str):
