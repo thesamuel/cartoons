@@ -1,5 +1,6 @@
 import json
 import os
+import time
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from typing import Optional
@@ -71,6 +72,23 @@ def download_cartoon(cid: int) -> Optional[str]:
     return None
 
 
+def batches(l, n):
+    for i in range(0, len(l), n):
+        yield l[i:i + n]
+
+
+def download_batch(cartoon_ids: set):
+    pool = ThreadPool(_NUM_THREADS)
+    with tqdm(total=len(cartoon_ids), desc="Downloading cartoons") as t:
+        num_errors = 0
+        for err in pool.imap_unordered(download_cartoon, cartoon_ids):
+            if err:
+                t.write(err)
+                num_errors += 1
+                t.set_description(f"Downloading cartoons ({num_errors} errors)")
+            t.update(1)
+
+
 def download_cartoons_from_file(filename: str):
     # Get all cartoon ids from file
     lines = tuple(open(filename, 'r'))
@@ -81,16 +99,9 @@ def download_cartoons_from_file(filename: str):
     downloaded_ids = set(int(os.path.splitext(filename)[0]) for filename in os.listdir(_DATA_PATH))
     cartoon_ids -= downloaded_ids
 
-    # Download cartoons concurrently
-    pool = ThreadPool(_NUM_THREADS)
-    with tqdm(total=len(cartoon_ids), desc="Downloading cartoons") as t:
-        num_errors = 0
-        for err in pool.imap_unordered(download_cartoon, cartoon_ids):
-            if err:
-                t.write(err)
-                num_errors += 1
-                t.set_description(f"Downloading cartoons ({num_errors} errors)")
-            t.update(1)
+    for batch in batches(cartoon_ids, 500):
+        download_batch(batch)
+        time.sleep(15)
 
 
 if __name__ == "__main__":
