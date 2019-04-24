@@ -9,7 +9,7 @@ import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm, trange
 
-_NUM_THREADS = 100
+_NUM_THREADS = 50
 _BATCH_SIZE = 400
 _SLEEP_SECONDS = 5
 
@@ -38,7 +38,8 @@ def parse_metadata(soup: BeautifulSoup) -> dict:
 
     title, keywords, caption = (parse_description(soup, h) for h in _METADATA_HEADERS)
     keywords = keywords.split(", ") if keywords else None
-    return {"title": title, "keywords": keywords, "caption": caption, "image_url": img["src"]}
+    return {"title": title, "keywords": keywords, "caption": caption,
+            "image_url": "http://editorialcartoonists.com" + img["src"]}
 
 
 def download_cartoon(cid: int) -> Optional[str]:
