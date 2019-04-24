@@ -27,14 +27,17 @@ def parse_description(soup: BeautifulSoup, header: str) -> Optional[str]:
     return description.strip()
 
 
-def parse_metadata(soup: BeautifulSoup) -> Optional[dict]:
-    image_url = soup.find("img", {"name": "Toon"})["src"]
+def parse_metadata(soup: BeautifulSoup) -> dict:
+    img = soup.find("img", {"name": "Toon"})
+    if not img:
+        raise Exception("No image url found.")
+
     title, keywords, caption = (parse_description(soup, h) for h in _METADATA_HEADERS)
     keywords = keywords.split(", ") if keywords else None
-    return {"title": title, "keywords": keywords, "caption": caption, "image_url": image_url}
+    return {"title": title, "keywords": keywords, "caption": caption, "image_url": img["src"]}
 
 
-def download_cartoon(cid: int):
+def download_cartoon(cid: int) -> Optional[str]:
     cartoon_url = _BASE_URL + str(cid)
     try:
         # Request cartoon page
@@ -47,9 +50,7 @@ def download_cartoon(cid: int):
         # Download cartoon image
         image = requests.get(metadata["image_url"]).content
     except Exception as e:
-        print(f"Error occurred while downloading cartoon {cid}:")
-        print(e)
-        return
+        return f"Error occurred while downloading cartoon {cid}:\n {e}"
 
     image_path = _DATA_PATH / f"{cid}.jpg"
     metadata_path = _DATA_PATH / f"{cid}.json"
@@ -59,13 +60,15 @@ def download_cartoon(cid: int):
             f.write(image)
         with open(metadata_path, 'w') as f:
             json.dump(metadata, f)
-    except:
+    except:  # Handle any interruption while writing
         # Remove partially-saved files
-        print("Removing any partially-saved files")
         if os.path.exists(image_path):
             os.remove(image_path)
         if os.path.exists(metadata_path):
             os.remove(metadata_path)
+        return f"Error occurred while saving cartoon {cid}"
+
+    return None
 
 
 def download_cartoons_from_file(filename: str):
@@ -81,7 +84,12 @@ def download_cartoons_from_file(filename: str):
     # Download cartoons concurrently
     pool = ThreadPool(_NUM_THREADS)
     with tqdm(total=len(cartoon_ids)) as t:
-        for _ in pool.imap_unordered(download_cartoon, cartoon_ids):
+        num_errors = 0
+        for err in pool.imap_unordered(download_cartoon, cartoon_ids):
+            if err:
+                t.write(err)
+                num_errors += 1
+                t.set_description(f"Downloading cartoons ({num_errors} errors):")
             t.update(1)
 
 
