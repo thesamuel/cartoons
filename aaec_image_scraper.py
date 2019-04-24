@@ -50,7 +50,7 @@ def download_cartoon(cid: int) -> Optional[str]:
         # Download cartoon image
         image = requests.get(metadata["image_url"]).content
     except Exception as e:
-        return f"Error occurred while downloading cartoon {cid}:\n {e}"
+        return f"Error occurred while downloading cartoon {cid}: {e}"
 
     image_path = _DATA_PATH / f"{cid}.jpg"
     metadata_path = _DATA_PATH / f"{cid}.json"
@@ -83,13 +83,13 @@ def download_cartoons_from_file(filename: str):
 
     # Download cartoons concurrently
     pool = ThreadPool(_NUM_THREADS)
-    with tqdm(total=len(cartoon_ids)) as t:
+    with tqdm(total=len(cartoon_ids), desc="Downloading cartoons") as t:
         num_errors = 0
         for err in pool.imap_unordered(download_cartoon, cartoon_ids):
             if err:
                 t.write(err)
                 num_errors += 1
-                t.set_description(f"Downloading cartoons ({num_errors} errors):")
+                t.set_description(f"Downloading cartoons ({num_errors} errors)")
             t.update(1)
 
 
