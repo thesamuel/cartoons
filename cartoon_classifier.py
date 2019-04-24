@@ -13,20 +13,19 @@ from torchvision import datasets, models, transforms
 print("PyTorch Version: ", torch.__version__)
 print("Torchvision Version: ", torchvision.__version__)
 
-
 ######################################################################
 # Inputs
 ######################################################################
 
-# Top-level data directory that conforms to ImageFolder strucutre.
+# Top-level data directory that conforms to ImageFolder structure
 data_dir = "./aaec-cartoons"
 
-num_classes = 2  # FIXME: determine this
+num_classes = 2  # FIXME: set to number of authors
 batch_size = 64
 num_epochs = 20
 
-# Flag for feature extracting.
-# When False, finetune the whole model. When True, only update the reshaped layer params.
+# Flag for feature extracting. When False, finetune the whole model.
+# When True, only update the reshaped layer params.
 feature_extract = True
 
 
@@ -56,16 +55,16 @@ def train_model(model, dataloaders, criterion, optimizer, num_epochs=25):
             running_loss = 0.0
             running_corrects = 0
 
-            # Iterate over data.
+            # Iterate over data
             for inputs, labels in dataloaders[phase]:
                 inputs = inputs.to(device)
                 labels = labels.to(device)
 
-                # zero the parameter gradients
+                # Zero the parameter gradients
                 optimizer.zero_grad()
 
-                # forward
-                # track history if only in train
+                # Forward pass
+                # Only track history training phase
                 with torch.set_grad_enabled(phase == 'train'):
                     # Get model outputs and calculate loss
                     outputs = model(inputs)
@@ -73,12 +72,12 @@ def train_model(model, dataloaders, criterion, optimizer, num_epochs=25):
 
                     _, preds = torch.max(outputs, 1)
 
-                    # backward + optimize only if in training phase
+                    # Only perform backward + optimization in training phase
                     if phase == 'train':
                         loss.backward()
                         optimizer.step()
 
-                # statistics
+                # Statistics
                 running_loss += loss.item() * inputs.size(0)
                 running_corrects += torch.sum(preds == labels.data)
 
@@ -87,7 +86,7 @@ def train_model(model, dataloaders, criterion, optimizer, num_epochs=25):
 
             print('{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc))
 
-            # deep copy the model
+            # Make a deep copy of the model
             if phase == 'val' and epoch_acc > best_acc:
                 best_acc = epoch_acc
                 best_model_wts = copy.deepcopy(model.state_dict())
@@ -100,7 +99,7 @@ def train_model(model, dataloaders, criterion, optimizer, num_epochs=25):
     print('Training complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
     print('Best val Acc: {:4f}'.format(best_acc))
 
-    # load best model weights
+    # Load the best model weights
     model.load_state_dict(best_model_wts)
     return model, val_acc_history
 
@@ -112,12 +111,12 @@ def train_model(model, dataloaders, criterion, optimizer, num_epochs=25):
 def set_parameter_requires_grad(model, feature_extracting):
     """
     This helper function sets the ``.requires_grad`` attribute of the
-    parameters in the model to False when we are feature extracting. By
-    default, when we load a pretrained model all of the parameters have
-    ``.requires_grad=True``, which is fine if we are training from scratch
-    or finetuning. However, if we are feature extracting and only want to
-    compute gradients for the newly initialized layer then we want all of
-    the other parameters to not require gradients.
+    parameters in the model to False when we are feature extracting.
+    By default, when we load a pretrained model all of the parameters
+    have ``.requires_grad=True``, which is fine if we are training
+    from scratch or finetuning. However, if we are feature extracting
+    and only want to compute gradients for the newly initialized layer
+    then we want all of the other parameters to not require gradients.
     """
     if feature_extracting:
         for param in model.parameters():
@@ -148,8 +147,8 @@ print(model_ft)
 # Load Data
 ######################################################################
 
-# Data augmentation and normalization for training
-# Just normalization for validation
+# Training: data augmentation and normalization
+# Validation: only normalization
 data_transforms = {
     'train': transforms.Compose([
         transforms.RandomResizedCrop(input_size),
@@ -168,11 +167,16 @@ data_transforms = {
 print("Initializing Datasets and Dataloaders...")
 
 # Create training and validation datasets
-image_datasets = {x: datasets.ImageFolder(os.path.join(data_dir, x), data_transforms[x]) for x in ['train', 'val']}
+image_datasets = {
+    x: datasets.ImageFolder(os.path.join(data_dir, x), data_transforms[x])
+    for x in ['train', 'val']
+}
+
 # Create training and validation dataloaders
 dataloaders_dict = {
-    x: torch.utils.data.DataLoader(image_datasets[x], batch_size=batch_size, shuffle=True, num_workers=4) for x in
-    ['train', 'val']}
+    x: torch.utils.data.DataLoader(image_datasets[x], batch_size=batch_size, shuffle=True, num_workers=4)
+    for x in ['train', 'val']
+}
 
 # Detect if we have a GPU available
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
