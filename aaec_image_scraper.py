@@ -35,32 +35,37 @@ def parse_metadata(soup: BeautifulSoup) -> Optional[dict]:
 
 
 def download_cartoon(cid: int):
-    # Request cartoon page
     cartoon_url = _BASE_URL + str(cid)
-    r = requests.get(cartoon_url)
-    soup = BeautifulSoup(r.content, 'html.parser')
+    try:
+        # Request cartoon page
+        r = requests.get(cartoon_url)
+        soup = BeautifulSoup(r.content, 'html.parser')
 
-    # Parse metadata from cartoon page
-    metadata = parse_metadata(soup)
+        # Parse metadata from cartoon page
+        metadata = parse_metadata(soup)
 
-    # Download cartoon image
-    image = requests.get(metadata["image_url"]).content
+        # Download cartoon image
+        image = requests.get(metadata["image_url"]).content
+    except Exception as e:
+        print(f"Error occurred while downloading cartoon {cid}:")
+        print(e)
+        return
 
-    # Save files
     image_path = _DATA_PATH / f"{cid}.jpg"
     metadata_path = _DATA_PATH / f"{cid}.json"
     try:
+        # Save files
         with open(image_path, 'wb') as f:
             f.write(image)
         with open(metadata_path, 'w') as f:
             json.dump(metadata, f)
-    except KeyboardInterrupt:
+    except:
+        # Remove partially-saved files
         print("Removing any partially-saved files")
-        try:
+        if os.path.exists(image_path):
             os.remove(image_path)
+        if os.path.exists(metadata_path):
             os.remove(metadata_path)
-        except OSError:
-            pass
 
 
 def download_cartoons_from_file(filename: str):
