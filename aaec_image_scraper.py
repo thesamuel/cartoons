@@ -97,7 +97,7 @@ def download_cartoons_from_file(filename: str):
 
     # Remove all previously downloaded ids
     downloaded_ids = set(int(os.path.splitext(filename)[0]) for filename in os.listdir(_DATA_PATH))
-    cartoon_ids -= downloaded_ids
+    cartoon_ids = list(cartoon_ids - downloaded_ids)
 
     for batch in batches(cartoon_ids, 500):
         download_batch(batch)
