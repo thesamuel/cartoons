@@ -1,24 +1,22 @@
 import json
 import os
-import time
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from typing import Optional
 
 import requests
 from bs4 import BeautifulSoup
-from tqdm import tqdm, trange
+from tqdm import tqdm
 
-_NUM_THREADS = 50
-_BATCH_SIZE = 400
-_SLEEP_SECONDS = 5
+_NUM_THREADS = 20
 
 _ID_FILE = "cartoon_ids.txt"
 _DATA_PATH = Path("./data")
 
-_BASE_URL = "http://editorialcartoonists.com/cartoon/display.cfm/"
+_BASE_URL = "http://editorialcartoonists.com"
+_CARTOON_URL = _BASE_URL + "/cartoon/display.cfm/"
 _METADATA_HEADERS = ("Cartoon Title", "Keywords", "Caption")
-_TIMEOUT = 15
+_TIMEOUT = 20
 
 
 def parse_description(soup: BeautifulSoup, header: str) -> Optional[str]:
@@ -38,12 +36,11 @@ def parse_metadata(soup: BeautifulSoup) -> dict:
 
     title, keywords, caption = (parse_description(soup, h) for h in _METADATA_HEADERS)
     keywords = keywords.split(", ") if keywords else None
-    return {"title": title, "keywords": keywords, "caption": caption,
-            "image_url": "http://editorialcartoonists.com" + img["src"]}
+    return {"title": title, "keywords": keywords, "caption": caption, "image_url": _BASE_URL + img["src"]}
 
 
 def download_cartoon(cid: int) -> Optional[str]:
-    cartoon_url = _BASE_URL + str(cid)
+    cartoon_url = _CARTOON_URL + str(cid)
     try:
         # Request cartoon page
         r = requests.get(cartoon_url, timeout=_TIMEOUT)
@@ -76,23 +73,6 @@ def download_cartoon(cid: int) -> Optional[str]:
     return None
 
 
-def batches(l, n):
-    for i in range(0, len(l), n):
-        yield l[i:i + n]
-
-
-def download_batch(cartoon_ids: list):
-    pool = ThreadPool(_NUM_THREADS)
-    with tqdm(total=len(cartoon_ids), desc="Downloading cartoons") as t:
-        num_errors = 0
-        for err in pool.imap_unordered(download_cartoon, cartoon_ids):
-            if err:
-                t.write(err)
-                num_errors += 1
-                t.set_description(f"Downloading cartoons ({num_errors} errors)")
-            t.update(1)
-
-
 def download_cartoons_from_file(filename: str):
     # Get all cartoon ids from file
     lines = tuple(open(filename, 'r'))
@@ -103,10 +83,16 @@ def download_cartoons_from_file(filename: str):
     downloaded_ids = set(int(os.path.splitext(filename)[0]) for filename in os.listdir(_DATA_PATH))
     cartoon_ids = list(cartoon_ids - downloaded_ids)
 
-    for i in trange(0, len(cartoon_ids), _BATCH_SIZE, desc="Batch"):
-        download_batch(cartoon_ids[i:i + _BATCH_SIZE])
-        tqdm.write(f"Sleeping for {_SLEEP_SECONDS} seconds...")
-        time.sleep(_SLEEP_SECONDS)
+    # Download all cartoons
+    pool = ThreadPool(_NUM_THREADS)
+    with tqdm(total=len(cartoon_ids), desc="Downloading cartoons") as t:
+        num_errors = 0
+        for err in pool.imap_unordered(download_cartoon, cartoon_ids):
+            if err:
+                t.write(err)
+                num_errors += 1
+                t.set_description(f"Downloading cartoons ({num_errors} errors)")
+            t.update(1)
 
 
 if __name__ == "__main__":
