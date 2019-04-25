@@ -28,7 +28,7 @@ def parse_image_url(soup: BeautifulSoup) -> str:
     if not img_url.netloc:
         # If no domain was specified, its a relative url for the new ".com" domain.
         # Otherwise, its an absolute url for the old ".org" domain.
-        img_url = img_url._replace(netloc="editorialcartoonists.com")
+        img_url = img_url._replace(scheme='http', netloc="editorialcartoonists.com")
 
     return img_url.geturl()
 
