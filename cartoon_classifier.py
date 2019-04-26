@@ -9,19 +9,21 @@ import torch.nn as nn
 import torch.optim as optim
 import torchvision
 from torchvision import datasets, models, transforms
+from tqdm import tqdm, trange
 
-print("PyTorch Version: ", torch.__version__)
-print("Torchvision Version: ", torchvision.__version__)
+print("PyTorch Version:", torch.__version__)
+print("Torchvision Version:", torchvision.__version__)
+print(f"CUDA {'is' if torch.cuda.is_available() else 'is NOT'} available")
 
 ######################################################################
 # Inputs
 ######################################################################
 
 # Top-level data directory that conforms to ImageFolder structure
-data_dir = "./aaec-cartoons"
+data_dir = "./data-sorted"
 
-num_classes = 2  # FIXME: set to number of authors
-batch_size = 64
+num_classes = 112  # FIXME: set to number of authors
+batch_size = 32
 num_epochs = 20
 
 # Flag for feature extracting. When False, finetune the whole model.
@@ -41,10 +43,7 @@ def train_model(model, dataloaders, criterion, optimizer, num_epochs=25):
     best_model_wts = copy.deepcopy(model.state_dict())
     best_acc = 0.0
 
-    for epoch in range(num_epochs):
-        print('Epoch {}/{}'.format(epoch, num_epochs - 1))
-        print('-' * 10)
-
+    for epoch in trange(num_epochs, desc='epoch'):
         # Each epoch has a training and validation phase
         for phase in ['train', 'val']:
             if phase == 'train':
@@ -56,7 +55,7 @@ def train_model(model, dataloaders, criterion, optimizer, num_epochs=25):
             running_corrects = 0
 
             # Iterate over data
-            for inputs, labels in dataloaders[phase]:
+            for inputs, labels in tqdm(dataloaders[phase], desc=phase):
                 inputs = inputs.to(device)
                 labels = labels.to(device)
 
@@ -84,7 +83,7 @@ def train_model(model, dataloaders, criterion, optimizer, num_epochs=25):
             epoch_loss = running_loss / len(dataloaders[phase].dataset)
             epoch_acc = running_corrects.double() / len(dataloaders[phase].dataset)
 
-            print('{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc))
+            tqdm.write('{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc))
 
             # Make a deep copy of the model
             if phase == 'val' and epoch_acc > best_acc:
@@ -93,11 +92,9 @@ def train_model(model, dataloaders, criterion, optimizer, num_epochs=25):
             if phase == 'val':
                 val_acc_history.append(epoch_acc)
 
-        print()
-
     time_elapsed = time.time() - since
-    print('Training complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
-    print('Best val Acc: {:4f}'.format(best_acc))
+    tqdm.write('Training complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
+    tqdm.write('Best val Acc: {:4f}'.format(best_acc))
 
     # Load the best model weights
     model.load_state_dict(best_model_wts)
@@ -218,6 +215,7 @@ criterion = nn.CrossEntropyLoss()
 
 # Train and evaluate
 model_ft, hist = train_model(model_ft, dataloaders_dict, criterion, optimizer_ft, num_epochs=num_epochs)
+torch.save(model_ft, "saved-models/best-model.pth")
 hist = [h.cpu().numpy() for h in hist]
 
 # Plot the training curves of validation accuracy vs. number of training epochs
