@@ -5,6 +5,9 @@ from collections import Counter
 
 _DATA_DIR = Path('data')
 
+def split_tags(tags: str) -> list:
+    return [t.strip().lower() for t in tags.split(',')]
+
 # Get all of the available tags
 tags = {}
 for filename in os.listdir(_DATA_DIR):
@@ -19,12 +22,13 @@ for filename in os.listdir(_DATA_DIR):
         metadata = json.load(f)
         keywords = metadata['keywords']
         if keywords:
-            # Fix keywords
-            tags[cid] = keywords
+            if not isinstance(keywords, str):
+                # Fix old keword splitting scheme
+                keywords = ", ".join(keywords)
+
+            tags[cid] = split_tags(keywords)
 
 # See what the most common tags are
-all_tags = [t for tags_for_cartoon in tags.values() for t in tags_for_cartoon]
-all_tags = [t.split(',') for t in all_tags]
 all_tags = [t for tags_for_cartoon in tags.values() for t in tags_for_cartoon]
 tag_counts = Counter(all_tags)
 
