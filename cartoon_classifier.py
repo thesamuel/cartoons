@@ -11,9 +11,9 @@ import torchvision
 from torchvision import datasets, models, transforms
 from tqdm import tqdm, trange
 
-print("PyTorch Version:", torch.__version__)
-print("Torchvision Version:", torchvision.__version__)
-print(f"CUDA {'is' if torch.cuda.is_available() else 'is NOT'} available")
+tqdm.write("PyTorch Version:", torch.__version__)
+tqdm.write("Torchvision Version:", torchvision.__version__)
+tqdm.write(f"CUDA {'is' if torch.cuda.is_available() else 'is NOT'} available")
 
 ######################################################################
 # Inputs
@@ -138,7 +138,7 @@ def initialize_model(num_classes, feature_extract, use_pretrained=True):
 model_ft, input_size = initialize_model(num_classes, feature_extract, use_pretrained=True)
 
 # Print the model we just instantiated
-print(model_ft)
+tqdm.write(model_ft)
 
 ######################################################################
 # Load Data
@@ -161,7 +161,7 @@ data_transforms = {
     ]),
 }
 
-print("Initializing Datasets and Dataloaders...")
+tqdm.write("Initializing Datasets and Dataloaders...")
 
 # Create training and validation datasets
 image_datasets = {
@@ -191,17 +191,17 @@ model_ft = model_ft.to(device)
 # that we have just initialized, i.e. the parameters with requires_grad
 # is True.
 params_to_update = model_ft.parameters()
-print("Params to learn:")
+tqdm.write("Params to learn:")
 if feature_extract:
     params_to_update = []
     for name, param in model_ft.named_parameters():
         if param.requires_grad:
             params_to_update.append(param)
-            print("\t", name)
+            tqdm.write("\t", name)
 else:
     for name, param in model_ft.named_parameters():
         if param.requires_grad:
-            print("\t", name)
+            tqdm.write("\t", name)
 
 # Observe that all parameters are being optimized
 optimizer_ft = optim.SGD(params_to_update, lr=0.001, momentum=0.9)
