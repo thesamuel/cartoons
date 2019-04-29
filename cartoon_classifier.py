@@ -20,7 +20,7 @@ tqdm.write(f"CUDA {'is' if torch.cuda.is_available() else 'is NOT'} available")
 ######################################################################
 
 # Top-level data directory that conforms to ImageFolder structure
-data_dir = "./data-sorted"
+data_dir = "./data"
 
 num_classes = 112  # FIXME: set to number of authors
 batch_size = 32

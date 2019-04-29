@@ -12,7 +12,7 @@ from tqdm import tqdm
 _NUM_THREADS = 20
 
 _ID_FILE = "cartoon_ids.txt"
-_DATA_PATH = Path("./data")
+_DATA_PATH = Path("./scraped-data")
 
 _CARTOON_URL = "http://editorialcartoonists.com/cartoon/display.cfm/"
 _METADATA_HEADERS = ("Cartoon Title", "Keywords", "Caption")
