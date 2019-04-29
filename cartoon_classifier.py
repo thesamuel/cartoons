@@ -1,3 +1,6 @@
+"""
+Taken from https://pytorch.org/tutorials/beginner/finetuning_torchvision_models_tutorial.html
+"""
 import copy
 import os
 import time
@@ -11,9 +14,9 @@ import torchvision
 from torchvision import datasets, models, transforms
 from tqdm import tqdm, trange
 
-tqdm.write("PyTorch Version:", torch.__version__)
-tqdm.write("Torchvision Version:", torchvision.__version__)
-tqdm.write(f"CUDA {'is' if torch.cuda.is_available() else 'is NOT'} available")
+print("PyTorch Version:", torch.__version__)
+print("Torchvision Version:", torchvision.__version__)
+print(f"CUDA {'is' if torch.cuda.is_available() else 'is NOT'} available")
 
 ######################################################################
 # Inputs
@@ -22,7 +25,7 @@ tqdm.write(f"CUDA {'is' if torch.cuda.is_available() else 'is NOT'} available")
 # Top-level data directory that conforms to ImageFolder structure
 data_dir = "./data"
 
-num_classes = 112  # FIXME: set to number of authors
+num_classes = 2
 batch_size = 32
 num_epochs = 20
 
@@ -83,7 +86,7 @@ def train_model(model, dataloaders, criterion, optimizer, num_epochs=25):
             epoch_loss = running_loss / len(dataloaders[phase].dataset)
             epoch_acc = running_corrects.double() / len(dataloaders[phase].dataset)
 
-            tqdm.write('{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc))
+            print('{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc))
 
             # Make a deep copy of the model
             if phase == 'val' and epoch_acc > best_acc:
@@ -93,8 +96,8 @@ def train_model(model, dataloaders, criterion, optimizer, num_epochs=25):
                 val_acc_history.append(epoch_acc)
 
     time_elapsed = time.time() - since
-    tqdm.write('Training complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
-    tqdm.write('Best val Acc: {:4f}'.format(best_acc))
+    print('Training complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
+    print('Best val Acc: {:4f}'.format(best_acc))
 
     # Load the best model weights
     model.load_state_dict(best_model_wts)
@@ -138,7 +141,7 @@ def initialize_model(num_classes, feature_extract, use_pretrained=True):
 model_ft, input_size = initialize_model(num_classes, feature_extract, use_pretrained=True)
 
 # Print the model we just instantiated
-tqdm.write(model_ft)
+print(model_ft)
 
 ######################################################################
 # Load Data
@@ -161,7 +164,7 @@ data_transforms = {
     ]),
 }
 
-tqdm.write("Initializing Datasets and Dataloaders...")
+print("Initializing Datasets and Dataloaders...")
 
 # Create training and validation datasets
 image_datasets = {
@@ -191,17 +194,17 @@ model_ft = model_ft.to(device)
 # that we have just initialized, i.e. the parameters with requires_grad
 # is True.
 params_to_update = model_ft.parameters()
-tqdm.write("Params to learn:")
+print("Params to learn:")
 if feature_extract:
     params_to_update = []
     for name, param in model_ft.named_parameters():
         if param.requires_grad:
             params_to_update.append(param)
-            tqdm.write("\t", name)
+            print("\t", name)
 else:
     for name, param in model_ft.named_parameters():
         if param.requires_grad:
-            tqdm.write("\t", name)
+            print("\t", name)
 
 # Observe that all parameters are being optimized
 optimizer_ft = optim.SGD(params_to_update, lr=0.001, momentum=0.9)
@@ -215,7 +218,7 @@ criterion = nn.CrossEntropyLoss()
 
 # Train and evaluate
 model_ft, hist = train_model(model_ft, dataloaders_dict, criterion, optimizer_ft, num_epochs=num_epochs)
-torch.save(model_ft, "best-model.pth")
+torch.save(model_ft, "best-model-trump-obama.pth")
 hist = [h.cpu().numpy() for h in hist]
 
 # Plot the training curves of validation accuracy vs. number of training epochs
