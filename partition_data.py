@@ -6,8 +6,8 @@ from pathlib import Path
 from shutil import copyfile
 from tqdm import tqdm
 
-_IN_DATA_DIR = Path('./raw-data')
-_OUT_DATA_DIR = Path('./data')
+_IN_DATA_DIR = Path('./data/clean-data')
+_OUT_DATA_DIR = Path('./data/classifier-data')
 _RANDOM_SEED = 2019
 
 

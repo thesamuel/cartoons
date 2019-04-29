@@ -23,7 +23,7 @@ print(f"CUDA {'is' if torch.cuda.is_available() else 'is NOT'} available")
 ######################################################################
 
 # Top-level data directory that conforms to ImageFolder structure
-data_dir = "./data"
+data_dir = "./data/classifier-data"
 
 num_classes = 2
 batch_size = 32

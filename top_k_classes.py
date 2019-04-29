@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from collections import Counter
 
-_DATA_DIR = Path('./raw-data')
+_DATA_DIR = Path('./data/clean-data')
 _TOP_K = 10
 
 
