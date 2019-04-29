@@ -7,8 +7,8 @@ _DATA_DIR = Path('./raw-data')
 _TOP_K = 10
 
 
-def split_keywords(keywords: str) -> list:
-    return [t.strip().lower() for t in keywords.split(',')]
+def split_keywords(keywords: str) -> set:
+    return set(t.strip().lower() for t in keywords.split(','))
 
 
 # Keep statistics for keywords
@@ -17,7 +17,7 @@ empty = 0
 total = 0
 
 # Get all of the available tags
-tags = {}
+all_keywords = Counter()
 for filename in os.listdir(_DATA_DIR):
     cid, ext = os.path.splitext(filename)
 
@@ -34,16 +34,15 @@ for filename in os.listdir(_DATA_DIR):
         elif "," not in keywords:
             unsplittable += 1
         else:
-            tags[cid] = split_keywords(keywords)
+            all_keywords.update(split_keywords(keywords))
 
+# Remove entry for empty string
+del all_keywords[""]
+
+# Print results
 print(f"Keywords found for {total - unsplittable - empty} cartoons:")
 print(f"{unsplittable} unsplittable, {empty} empty")
 print()
 
-# See what the most common tags are
-all_tags = [t for tags_for_cartoon in tags.values() for t in tags_for_cartoon]
-tag_counts = Counter(all_tags)
-
-most_common = [x[0].strip().lower() for x in tag_counts.most_common(_TOP_K)]
-most_common = list(dict.fromkeys(most_common))
-print(*most_common, sep='\n')
+print(f"{_TOP_K} most common tags:")
+print(*all_keywords.most_common(_TOP_K), sep='\n')
