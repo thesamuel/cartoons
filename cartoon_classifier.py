@@ -215,7 +215,7 @@ criterion = nn.CrossEntropyLoss()
 
 # Train and evaluate
 model_ft, hist = train_model(model_ft, dataloaders_dict, criterion, optimizer_ft, num_epochs=num_epochs)
-torch.save(model_ft, "saved-models/best-model.pth")
+torch.save(model_ft, "best-model.pth")
 hist = [h.cpu().numpy() for h in hist]
 
 # Plot the training curves of validation accuracy vs. number of training epochs
