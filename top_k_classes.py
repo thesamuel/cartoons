@@ -3,10 +3,12 @@ import os
 from pathlib import Path
 from collections import Counter
 
-_DATA_DIR = Path('data')
+_DATA_DIR = Path('./scraped-data')
 
-def split_tags(tags: str) -> list:
-    return [t.strip().lower() for t in tags.split(',')]
+
+def split_keywords(keywords: str) -> list:
+    return [t.strip().lower() for t in keywords.split(',')]
+
 
 # Get all of the available tags
 tags = {}
@@ -23,10 +25,10 @@ for filename in os.listdir(_DATA_DIR):
         keywords = metadata['keywords']
         if keywords:
             if not isinstance(keywords, str):
-                # Fix old keword splitting scheme
+                # Reverse old keyword splitting scheme
                 keywords = ", ".join(keywords)
 
-            tags[cid] = split_tags(keywords)
+            tags[cid] = split_keywords(keywords)
 
 # See what the most common tags are
 all_tags = [t for tags_for_cartoon in tags.values() for t in tags_for_cartoon]
