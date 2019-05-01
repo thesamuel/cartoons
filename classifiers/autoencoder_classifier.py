@@ -20,6 +20,7 @@ from tqdm import tqdm, trange
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 INPUT_SIZE = 224
+NUM_CHANNELS = 3
 
 BATCH_SIZE = 32
 LEARNING_RATE = 0.01
@@ -59,7 +60,7 @@ class BasicAutoencoder(nn.Module):
         self.skip_decoding = skip_decoding
 
         self.encoder = nn.Sequential(
-            nn.Conv2d(1, 16, 3, stride=3, padding=1),  # b, 16, 10, 10
+            nn.Conv2d(NUM_CHANNELS, 16, 3, stride=3, padding=1),  # b, 16, 10, 10
             nn.ReLU(True),
             nn.MaxPool2d(2, stride=2),  # b, 16, 5, 5
             nn.Conv2d(16, 8, 3, stride=2, padding=1),  # b, 8, 3, 3
@@ -72,7 +73,7 @@ class BasicAutoencoder(nn.Module):
             nn.ReLU(True),
             nn.ConvTranspose2d(16, 8, 5, stride=3, padding=1),  # b, 8, 15, 15
             nn.ReLU(True),
-            nn.ConvTranspose2d(8, 1, 2, stride=2, padding=1),  # b, 1, 28, 28
+            nn.ConvTranspose2d(8, NUM_CHANNELS, 2, stride=2, padding=1),  # b, 1, 28, 28
             nn.Tanh()
         )
 
