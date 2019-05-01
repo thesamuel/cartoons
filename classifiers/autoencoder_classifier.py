@@ -20,17 +20,15 @@ from tqdm import tqdm, trange
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 INPUT_SIZE = 224
-INPUT_SHAPE = (3, INPUT_SIZE, INPUT_SIZE)
 
 BATCH_SIZE = 32
 LEARNING_RATE = 0.01
 
 AUTOENCODER_DATA_DIR = './data/clean-data'
-NUM_EPOCHS_AUTOENCODER = 20
-ENCODER_DIM = 12
+NUM_EPOCHS_AUTOENCODER = 1
 
 CLASSIFIER_DATA_DIR = './data/classifier-data'
-NUM_EPOCHS_CLASSIFIER = 20
+NUM_EPOCHS_CLASSIFIER = 1
 NUM_CLASSES = 2
 
 
@@ -56,60 +54,33 @@ class BasicAutoencoder(nn.Module):
     Taken from https://ml-cheatsheet.readthedocs.io/en/latest/architectures.html
     """
 
-    def __init__(self, in_shape, encoder_dim: int, skip_decoding: bool = False):
+    def __init__(self, skip_decoding: bool = False):
         super().__init__()
         self.skip_decoding = skip_decoding
-        c, h, w = in_shape
-
-        hidden_dim_1 = 128
-        hidden_dim_2 = 64
 
         self.encoder = nn.Sequential(
-            nn.Linear(c * h * w, hidden_dim_1),
-            nn.ReLU(),
-            nn.Linear(hidden_dim_1, hidden_dim_2),
-            nn.ReLU(),
-            nn.Linear(hidden_dim_2, encoder_dim),
-            nn.ReLU()
+            nn.Conv2d(1, 16, 3, stride=3, padding=1),  # b, 16, 10, 10
+            nn.ReLU(True),
+            nn.MaxPool2d(2, stride=2),  # b, 16, 5, 5
+            nn.Conv2d(16, 8, 3, stride=2, padding=1),  # b, 8, 3, 3
+            nn.ReLU(True),
+            nn.MaxPool2d(2, stride=1)  # b, 8, 2, 2
         )
 
         self.decoder = nn.Sequential(
-            nn.Linear(encoder_dim, hidden_dim_2),
-            nn.ReLU(),
-            nn.Linear(hidden_dim_2, encoder_dim),
-            nn.ReLU(),
-            nn.Linear(encoder_dim, c * h * w),
-            nn.Sigmoid()
+            nn.ConvTranspose2d(8, 16, 3, stride=2),  # b, 16, 5, 5
+            nn.ReLU(True),
+            nn.ConvTranspose2d(16, 8, 5, stride=3, padding=1),  # b, 8, 15, 15
+            nn.ReLU(True),
+            nn.ConvTranspose2d(8, 1, 2, stride=2, padding=1),  # b, 1, 28, 28
+            nn.Tanh()
         )
 
     def forward(self, x):
-        bs, c, h, w = x.size()
-        x = x.view(bs, -1)
         x = self.encoder(x)
-
         if not self.skip_decoding:
             x = self.decoder(x)
-            x = x.view(bs, c, h, w)
-
         return x
-
-
-class ComicDataset(Dataset):
-    def __init__(self, root: str, suffix=".jpg", transform=None):
-        super(ComicDataset, self).__init__()
-        self.loader = default_loader
-        self.samples = list_files(root, suffix, prefix=True)
-        self.transform = transform
-
-    def __getitem__(self, index):
-        path = self.samples[index]
-        sample = self.loader(path)
-        if self.transform is not None:
-            sample = self.transform(sample)
-        return sample
-
-    def __len__(self):
-        return len(self.samples)
 
 
 ######################################################################
@@ -118,6 +89,9 @@ class ComicDataset(Dataset):
 
 def train_loop_classifier(model: BasicClassifier, dataloaders: dict, criterion: nn.Module, optimizer: Optimizer,
                           num_epochs: int):
+    """
+    Taken from https://pytorch.org/tutorials/beginner/finetuning_torchvision_models_tutorial.html
+    """
     since = time.time()
 
     val_acc_history = []
@@ -262,7 +236,7 @@ def train_autoencoder(data_transforms: dict):
     }
 
     # Initialize autoencoder
-    autoencoder = BasicAutoencoder(INPUT_SHAPE, ENCODER_DIM)
+    autoencoder = BasicAutoencoder()
     autoencoder.to(DEVICE)
 
     criterion = nn.MSELoss()  # MSE loss for images
@@ -290,7 +264,7 @@ def train_classifier(trained_autoencoder: BasicAutoencoder, data_transforms: dic
     trained_autoencoder.skip_decoding = True
 
     # Initialize classifier with trained autoencoder
-    classifier = BasicClassifier(trained_autoencoder, ENCODER_DIM, NUM_CLASSES)
+    classifier = BasicClassifier(trained_autoencoder, 12, NUM_CLASSES)
     classifier.to(DEVICE)
 
     # Setup loss function and optimizer
@@ -314,12 +288,30 @@ def plot(label: str, num_epochs: int, hist: list):
 
 
 ######################################################################
-# Run Training and Validation Step
+# Load Data
 ######################################################################
+
+class ComicDataset(Dataset):
+    def __init__(self, root: str, suffix=".jpg", transform=None):
+        super(ComicDataset, self).__init__()
+        self.loader = default_loader
+        self.samples = list_files(root, suffix, prefix=True)
+        self.transform = transform
+
+    def __getitem__(self, index):
+        path = self.samples[index]
+        sample = self.loader(path)
+        if self.transform is not None:
+            sample = self.transform(sample)
+        return sample
+
+    def __len__(self):
+        return len(self.samples)
+
 
 # Training: data augmentation and normalization
 # Validation: only normalization
-data_transforms = {
+DATA_TRANSFORMS = {
     'train': transforms.Compose([
         transforms.RandomResizedCrop(INPUT_SIZE),
         transforms.RandomHorizontalFlip(),
@@ -334,12 +326,15 @@ data_transforms = {
     ]),
 }
 
-# Train and evaluate
-autoencoder, autoencoder_hist = train_autoencoder(data_transforms)
+######################################################################
+# Run Training and Validation Step
+######################################################################
+
+autoencoder, autoencoder_hist = train_autoencoder(DATA_TRANSFORMS)
 torch.save(autoencoder, "autoencoder-best.pth")
 plot("Autoencoder", NUM_EPOCHS_AUTOENCODER, autoencoder_hist)
 
-classifier, classifier_hist = train_classifier(autoencoder, data_transforms)
+classifier, classifier_hist = train_classifier(autoencoder, DATA_TRANSFORMS)
 classifier_hist = [h.cpu().numpy() for h in classifier_hist]
 torch.save(classifier, "classifier-best.pth")
 plot("Classifier", NUM_EPOCHS_CLASSIFIER, classifier_hist)
