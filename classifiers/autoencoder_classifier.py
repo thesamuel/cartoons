@@ -1,7 +1,6 @@
 import copy
 import os
 import time
-from typing import Dict
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -117,7 +116,7 @@ class ComicDataset(Dataset):
 # Helpers
 ######################################################################
 
-def train_model(model: nn.Module, dataloaders: Dict[str: DataLoader], criterion: nn.Module, optimizer: Optimizer,
+def train_model(model: nn.Module, dataloaders: dict, criterion: nn.Module, optimizer: Optimizer,
                 num_epochs: int):
     since = time.time()
 
