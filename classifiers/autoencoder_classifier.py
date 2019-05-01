@@ -7,7 +7,7 @@ import numpy as np
 import torch
 from torch import nn, optim
 from torch.optim import Optimizer
-from torch.utils.data import Dataset, DataLoader, random_split
+from torch.utils.data import Dataset, random_split
 from torchvision import datasets, transforms
 from torchvision.datasets.folder import default_loader
 from torchvision.datasets.utils import list_files
@@ -250,13 +250,7 @@ def train_autoencoder(data_transforms: dict):
 
     # Split dataset into train and val
     split = int(0.9 * len(dataset))
-    train_dataset, val_dataset, _ = random_split(dataset, [
-        10,
-        20,
-        len(dataset) - 30
-        # split, 
-        # len(dataset) - split
-    ])
+    train_dataset, val_dataset = random_split(dataset, [split, len(dataset) - split])
     train_dataset.dataset.transform = data_transforms['train']
     val_dataset.dataset.transform = data_transforms['val']
     image_datasets = {'train': train_dataset, 'val': val_dataset}
@@ -349,4 +343,3 @@ classifier, classifier_hist = train_classifier(autoencoder, data_transforms)
 classifier_hist = [h.cpu().numpy() for h in classifier_hist]
 torch.save(classifier, "classifier-best.pth")
 plot("Classifier", NUM_EPOCHS_CLASSIFIER, classifier_hist)
-
