@@ -60,21 +60,18 @@ class BasicAutoencoder(nn.Module):
         self.skip_decoding = skip_decoding
 
         self.encoder = nn.Sequential(
-            nn.Conv2d(NUM_CHANNELS, 16, 3, stride=3, padding=1),  # b, 16, 10, 10
+            nn.Conv2d(3, 6, kernel_size=5),
             nn.ReLU(True),
-            nn.MaxPool2d(2, stride=2),  # b, 16, 5, 5
-            nn.Conv2d(16, 8, 3, stride=2, padding=1),  # b, 8, 3, 3
-            nn.ReLU(True),
-            nn.MaxPool2d(2, stride=1)  # b, 8, 2, 2
+            nn.Conv2d(6, 16, kernel_size=5),
+            nn.ReLU(True)
         )
 
         self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(8, 16, 3, stride=2),  # b, 16, 5, 5
+            nn.ConvTranspose2d(16, 6, kernel_size=5),
             nn.ReLU(True),
-            nn.ConvTranspose2d(16, 8, 5, stride=3, padding=1),  # b, 8, 15, 15
+            nn.ConvTranspose2d(6, 3, kernel_size=5),
             nn.ReLU(True),
-            nn.ConvTranspose2d(8, NUM_CHANNELS, 2, stride=2, padding=1),  # b, 1, 28, 28
-            nn.Tanh()
+            nn.Sigmoid()
         )
 
     def forward(self, x):
