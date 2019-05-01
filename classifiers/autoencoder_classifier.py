@@ -26,11 +26,11 @@ BATCH_SIZE = 32
 LEARNING_RATE = 0.01
 
 AUTOENCODER_DATA_DIR = './data/clean-data'
-NUM_EPOCHS_AUTOENCODER = 25
+NUM_EPOCHS_AUTOENCODER = 1
 ENCODER_DIM = 12
 
 CLASSIFIER_DATA_DIR = './data/classifier-data'
-NUM_EPOCHS_CLASSIFIER = 25
+NUM_EPOCHS_CLASSIFIER = 1
 NUM_CLASSES = 2
 
 
@@ -98,7 +98,7 @@ class ComicDataset(Dataset):
     def __init__(self, root: str, suffix=".jpg", transform=None):
         super(ComicDataset, self).__init__()
         self.loader = default_loader
-        self.samples = list_files(root, suffix)
+        self.samples = list_files(root, suffix, prefix=True)
         self.transform = transform
 
     def __getitem__(self, index):
@@ -116,8 +116,75 @@ class ComicDataset(Dataset):
 # Helpers
 ######################################################################
 
-def train_model(model: nn.Module, dataloaders: dict, criterion: nn.Module, optimizer: Optimizer,
-                num_epochs: int):
+def train_loop_classifier(model: BasicClassifier, dataloaders: dict, criterion: nn.Module, optimizer: Optimizer,
+                          num_epochs: int):
+    since = time.time()
+
+    val_acc_history = []
+
+    best_model_wts = copy.deepcopy(model.state_dict())
+    best_acc = 0.0
+
+    for _ in trange(num_epochs, desc='epoch'):
+        # Each epoch has a training and validation phase
+        for phase in ['train', 'val']:
+            if phase == 'train':
+                model.train()  # Set model to training mode
+            else:
+                model.eval()  # Set model to evaluate mode
+
+            running_loss = 0.0
+            running_corrects = 0
+
+            # Iterate over data
+            for inputs, labels in tqdm(dataloaders[phase], desc=phase):
+                inputs = inputs.to(DEVICE)
+                labels = labels.to(DEVICE)
+
+                # Zero the parameter gradients
+                optimizer.zero_grad()
+
+                # Forward pass
+                # Only track history training phase
+                with torch.set_grad_enabled(phase == 'train'):
+                    # Get model outputs and calculate loss
+                    outputs = model(inputs)
+                    loss = criterion(outputs, labels)
+
+                    _, preds = torch.max(outputs, 1)
+
+                    # Only perform backward + optimization in training phase
+                    if phase == 'train':
+                        loss.backward()
+                        optimizer.step()
+
+                # Statistics
+                running_loss += loss.item() * inputs.size(0)
+                running_corrects += torch.sum(preds == labels.data)
+
+            epoch_loss = running_loss / len(dataloaders[phase].dataset)
+            epoch_acc = running_corrects.double() / len(dataloaders[phase].dataset)
+
+            print('{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc))
+
+            # Make a deep copy of the model
+            if phase == 'val' and epoch_acc > best_acc:
+                best_acc = epoch_acc
+                best_model_wts = copy.deepcopy(model.state_dict())
+            if phase == 'val':
+                val_acc_history.append(epoch_acc)
+
+    time_elapsed = time.time() - since
+    print('Training complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
+    print('Best val Acc: {:4f}'.format(best_acc))
+
+    # Load the best model weights
+    model.load_state_dict(best_model_wts)
+    return model, val_acc_history
+
+
+def train_loop_autoencoder(model: BasicAutoencoder, dataloaders: dict, criterion: nn.Module, optimizer: Optimizer,
+                           num_epochs: int):
     since = time.time()
 
     val_loss_history = []
@@ -136,9 +203,8 @@ def train_model(model: nn.Module, dataloaders: dict, criterion: nn.Module, optim
             running_loss = 0.0
 
             # Iterate over data
-            for inputs, labels in tqdm(dataloaders[phase], desc=phase):
+            for inputs in tqdm(dataloaders[phase], desc=phase):
                 inputs = inputs.to(DEVICE)
-                labels = labels.to(DEVICE)
 
                 # Zero the parameter gradients
                 optimizer.zero_grad()
@@ -148,7 +214,7 @@ def train_model(model: nn.Module, dataloaders: dict, criterion: nn.Module, optim
                 with torch.set_grad_enabled(phase == 'train'):
                     # Get model outputs and calculate loss
                     outputs = model(inputs)
-                    loss = criterion(outputs, labels)
+                    loss = criterion(outputs, inputs)
 
                     # Only perform backward + optimization in training phase
                     if phase == 'train':
@@ -203,7 +269,7 @@ def train_autoencoder(data_transforms: dict):
     optimizer = optim.Adam(autoencoder.parameters(), lr=LEARNING_RATE)
 
     tqdm.write("Training Autoencoder...")
-    return train_model(autoencoder, dataloaders, criterion, optimizer, NUM_EPOCHS_AUTOENCODER)
+    return train_loop_autoencoder(autoencoder, dataloaders, criterion, optimizer, NUM_EPOCHS_AUTOENCODER)
 
 
 def train_classifier(trained_autoencoder: BasicAutoencoder, data_transforms: dict):
@@ -232,7 +298,7 @@ def train_classifier(trained_autoencoder: BasicAutoencoder, data_transforms: dic
     optimizer = optim.Adam(classifier.parameters(), lr=LEARNING_RATE)
 
     tqdm.write("Training Classifier...")
-    return train_model(classifier, dataloaders, criterion, optimizer, NUM_EPOCHS_CLASSIFIER)
+    return train_loop_classifier(classifier, dataloaders, criterion, optimizer, NUM_EPOCHS_CLASSIFIER)
 
 
 def plot(label: str, num_epochs: int, hist: list):
