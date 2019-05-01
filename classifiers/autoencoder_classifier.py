@@ -250,7 +250,13 @@ def train_autoencoder(data_transforms: dict):
 
     # Split dataset into train and val
     split = int(0.9 * len(dataset))
-    train_dataset, val_dataset = random_split(dataset, [split, len(dataset) - split])
+    train_dataset, val_dataset, _ = random_split(dataset, [
+        10,
+        20,
+        len(dataset) - 30
+        # split, 
+        # len(dataset) - split
+    ])
     train_dataset.dataset.transform = data_transforms['train']
     val_dataset.dataset.transform = data_transforms['val']
     image_datasets = {'train': train_dataset, 'val': val_dataset}
@@ -294,7 +300,7 @@ def train_classifier(trained_autoencoder: BasicAutoencoder, data_transforms: dic
     classifier.to(DEVICE)
 
     # Setup loss function and optimizer
-    criterion = nn.BCELoss()  # Binary loss for classes
+    criterion = nn.CrossEntropyLoss()  # Binary loss for classes
     optimizer = optim.Adam(classifier.parameters(), lr=LEARNING_RATE)
 
     tqdm.write("Training Classifier...")
@@ -303,13 +309,14 @@ def train_classifier(trained_autoencoder: BasicAutoencoder, data_transforms: dic
 
 def plot(label: str, num_epochs: int, hist: list):
     # Plot the training curves of validation accuracy vs. number of training epochs
-    plt.title("Validation Loss vs. Number of Training Epochs")
+    plt.clf()
+    plt.title("Validation Metric vs. Number of Training Epochs")
     plt.xlabel("Training Epochs")
-    plt.ylabel("Validation Loss")
+    plt.ylabel("Validation Metric")
     plt.plot(range(1, num_epochs + 1), hist, label=label)
     plt.xticks(np.arange(1, num_epochs + 1, 1.0))
     plt.legend()
-    plt.show()
+    plt.savefig(f"{label}.png")
 
 
 ######################################################################
@@ -335,7 +342,6 @@ data_transforms = {
 
 # Train and evaluate
 autoencoder, autoencoder_hist = train_autoencoder(data_transforms)
-autoencoder_hist = [h.cpu().numpy() for h in autoencoder_hist]
 torch.save(autoencoder, "autoencoder-best.pth")
 plot("Autoencoder", NUM_EPOCHS_AUTOENCODER, autoencoder_hist)
 
@@ -343,3 +349,4 @@ classifier, classifier_hist = train_classifier(autoencoder, data_transforms)
 classifier_hist = [h.cpu().numpy() for h in classifier_hist]
 torch.save(classifier, "classifier-best.pth")
 plot("Classifier", NUM_EPOCHS_CLASSIFIER, classifier_hist)
+
