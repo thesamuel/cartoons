@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="d4507a2e-d5e7-40f3-bd57-41a642ac63d4" name="deepmemes" url="http://deepmemes.samgehman.com">
+        <fileTransfer host="deepmemes.samgehman.com" port="22" privateKey="$PROJECT_DIR$/../.ssh/id_rsa" rootFolder="/home/sam/PycharmProjects/cartoons" accessType="SFTP" keyPair="true">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+          <option name="port" value="22" />
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
