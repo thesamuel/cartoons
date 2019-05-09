@@ -262,7 +262,7 @@ def train_classifier(trained_autoencoder: BasicAutoencoder, data_transforms: dic
     trained_autoencoder.skip_decoding = True
 
     # Initialize classifier with trained autoencoder
-    classifier = BasicClassifier(trained_autoencoder, 12, NUM_CLASSES)
+    classifier = BasicClassifier(trained_autoencoder, 216, NUM_CLASSES)
     classifier.to(DEVICE)
 
     # Setup loss function and optimizer
@@ -328,9 +328,14 @@ DATA_TRANSFORMS = {
 # Run Training and Validation Step
 ######################################################################
 
-autoencoder, autoencoder_hist = train_autoencoder(DATA_TRANSFORMS)
-torch.save(autoencoder, "autoencoder-best.pth")
-plot("Autoencoder", NUM_EPOCHS_AUTOENCODER, autoencoder_hist)
+# autoencoder, autoencoder_hist = train_autoencoder(DATA_TRANSFORMS)
+# torch.save(autoencoder, "autoencoder-best.pth")
+# plot("Autoencoder", NUM_EPOCHS_AUTOENCODER, autoencoder_hist)
+
+# Load autoencoder
+autoencoder = torch.load(
+autoencoder.load_state_dict(torch.load('autoencoder-best.pth'))
+autoencoder.to(DEVICE)
 
 classifier, classifier_hist = train_classifier(autoencoder, DATA_TRANSFORMS)
 classifier_hist = [h.cpu().numpy() for h in classifier_hist]
