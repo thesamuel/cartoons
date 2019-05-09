@@ -6,8 +6,8 @@ from pathlib import Path
 from shutil import copyfile
 from tqdm import tqdm
 
-_IN_DATA_DIR = Path('./data/clean-data')
 _RANDOM_SEED = 2019
+IN_DATA_DIR = './data/clean-data'
 
 
 def get_tag(metadata: dict) -> Optional[str]:
@@ -23,12 +23,15 @@ def get_tag(metadata: dict) -> Optional[str]:
         return None
 
 
-def partition_data(in_data_dir, out_data_dir):
+def partition_data(in_data_dir: str, out_data_dir: str):
     if not os.path.exists(in_data_dir):
         raise NotADirectoryError(in_data_dir, "doesn't exist")
 
     if os.path.exists(out_data_dir):
         raise IsADirectoryError(out_data_dir, "already exists")
+
+    in_data_dir = Path(in_data_dir)
+    out_data_dir = Path(out_data_dir)
 
     # Get filenames from directory
     filenames = set(os.listdir(in_data_dir))
@@ -59,13 +62,13 @@ def partition_data(in_data_dir, out_data_dir):
 
             # Add train or val to path
             if cid in train_ids:
-                out_path = out_data_dir / "train" / tag
+                out_class_dir = out_data_dir / "train" / tag
             elif cid in val_ids:
-                out_path = out_data_dir / "val" / tag
+                out_class_dir = out_data_dir / "val" / tag
             elif cid in test_ids:
-                out_path = out_data_dir / "test" / tag
+                out_class_dir = out_data_dir / "test" / tag
             else:
                 raise RuntimeError()
 
-            os.makedirs(out_path, exist_ok=True)
-            copyfile(in_data_dir / image_filename, out_path / image_filename)
+            os.makedirs(out_class_dir, exist_ok=True)
+            copyfile(in_data_dir / image_filename, out_class_dir / image_filename)
