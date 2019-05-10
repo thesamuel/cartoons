@@ -18,6 +18,7 @@ from tqdm import tqdm, trange
 ######################################################################
 
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+print("CUDA device:", DEVICE)
 
 INPUT_SIZE = 224
 NUM_CHANNELS = 3
@@ -40,13 +41,19 @@ NUM_CLASSES = 2
 class BasicClassifier(nn.Module):
     def __init__(self, encoder: nn.Module, encoder_dim: int, num_classes: int):
         super().__init__()
+        self.encoder_dim = encoder_dim
         self.encoder = encoder
-        self.fc = nn.Linear(encoder_dim, num_classes)
+        self.out = nn.Sequential(
+            nn.Linear(16 * encoder_dim * encoder_dim, 128),
+            nn.ReLU(),
+            nn.Linear(128, num_classes)
+        )
         self.softmax = nn.Softmax()
 
     def forward(self, x):
         x = self.encoder(x)
-        x = self.fc(x)
+        x = x.view(-1, 16 * self.encoder_dim * self.encoder_dim)
+        x = self.out(x)
         return self.softmax(x)
 
 
@@ -266,7 +273,7 @@ def train_classifier(trained_autoencoder: BasicAutoencoder, data_transforms: dic
     classifier.to(DEVICE)
 
     # Setup loss function and optimizer
-    criterion = nn.CrossEntropyLoss()  # Binary loss for classes
+    criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(classifier.parameters(), lr=LEARNING_RATE)
 
     tqdm.write("Training Classifier...")
@@ -333,8 +340,7 @@ DATA_TRANSFORMS = {
 # plot("Autoencoder", NUM_EPOCHS_AUTOENCODER, autoencoder_hist)
 
 # Load autoencoder
-autoencoder = torch.load(
-autoencoder.load_state_dict(torch.load('autoencoder-best.pth'))
+autoencoder = torch.load('./output/trump-obama/autoencoder-v1/autoencoder-best.pth')
 autoencoder.to(DEVICE)
 
 classifier, classifier_hist = train_classifier(autoencoder, DATA_TRANSFORMS)
