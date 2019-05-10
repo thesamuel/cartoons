@@ -27,10 +27,10 @@ BATCH_SIZE = 32
 LEARNING_RATE = 0.01
 
 AUTOENCODER_DATA_DIR = './data/clean-data'
-NUM_EPOCHS_AUTOENCODER = 1
+NUM_EPOCHS_AUTOENCODER = 50
 
 CLASSIFIER_DATA_DIR = './data/classifier-data'
-NUM_EPOCHS_CLASSIFIER = 1
+NUM_EPOCHS_CLASSIFIER = 20
 NUM_CLASSES = 2
 
 
@@ -335,15 +335,11 @@ DATA_TRANSFORMS = {
 # Run Training and Validation Step
 ######################################################################
 
-# autoencoder, autoencoder_hist = train_autoencoder(DATA_TRANSFORMS)
-# torch.save(autoencoder, "autoencoder-best.pth")
-# plot("Autoencoder", NUM_EPOCHS_AUTOENCODER, autoencoder_hist)
-
-# Load autoencoder
-autoencoder = torch.load('./output/trump-obama/autoencoder-v1/autoencoder-best.pth')
-autoencoder.to(DEVICE)
+autoencoder, autoencoder_hist = train_autoencoder(DATA_TRANSFORMS)
+plot("Autoencoder", NUM_EPOCHS_AUTOENCODER, autoencoder_hist)
 
 classifier, classifier_hist = train_classifier(autoencoder, DATA_TRANSFORMS)
-classifier_hist = [h.cpu().numpy() for h in classifier_hist]
 torch.save(classifier, "classifier-best.pth")
+
+classifier_hist = [h.cpu().numpy() for h in classifier_hist]
 plot("Classifier", NUM_EPOCHS_CLASSIFIER, classifier_hist)
