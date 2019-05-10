@@ -38,7 +38,7 @@ num_classes = 2
 batch_size = 32
 
 # Number of epochs to train for
-num_epochs = 20
+num_epochs = 15
 
 # Flag for feature extracting. When False, we finetune the whole model,
 #   when True we only update the reshaped layer params
@@ -233,13 +233,13 @@ data_transforms = {
         transforms.RandomResizedCrop(input_size),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
-        # transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ]),
     'val': transforms.Compose([
         transforms.Resize(input_size),
         transforms.CenterCrop(input_size),
         transforms.ToTensor(),
-        # transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ]),
 }
 
@@ -253,7 +253,9 @@ dataloaders_dict = {
     ['train', 'val']}
 
 # Detect if we have a GPU available
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device_id = "cuda:0" if torch.cuda.is_available() else "cpu"
+device = torch.device(device_id)
+print("CUDA device:", device_id)
 
 ######################################################################
 # Create the Optimizer

@@ -56,10 +56,10 @@ def partition_data(in_data_dir: str, out_data_dir: str, tag_func, balance_train:
 
     # Split the data
     split_1 = int(0.8 * len(ids))
-    split_2 = int(0.9 * len(ids))
+    # split_2 = int(0.9 * len(ids))
     train_ids = set(ids[:split_1])
-    val_ids = set(ids[split_1:split_2])
-    test_ids = set(ids[split_2:])
+    val_ids = set(ids[split_1:])
+    # test_ids = set(ids[split_2:])
 
     # Keep track of classes for data balancing
     image_filenames_for_tag = defaultdict(list)
@@ -85,9 +85,9 @@ def partition_data(in_data_dir: str, out_data_dir: str, tag_func, balance_train:
         elif cid in val_ids:
             # copy_operations["val"][tag] = image_filename
             out_class_dir = out_data_dir / "val" / tag
-        elif cid in test_ids:
-            # copy_operations["test"][tag] = image_filename
-            out_class_dir = out_data_dir / "test" / tag
+        # elif cid in test_ids:
+        #     # copy_operations["test"][tag] = image_filename
+        #     out_class_dir = out_data_dir / "test" / tag
         else:
             raise RuntimeError()
 
@@ -106,3 +106,6 @@ def partition_data(in_data_dir: str, out_data_dir: str, tag_func, balance_train:
                 out_class_dir = out_data_dir / "train" / tag
                 os.makedirs(out_class_dir, exist_ok=True)
                 copyfile(in_data_dir / image_filename, out_class_dir / image_filename)
+
+
+partition_data(IN_DATA_DIR, './data/balanced-classifier-data-v2/', tag_func=obama_trump_tag, balance_train=True)
