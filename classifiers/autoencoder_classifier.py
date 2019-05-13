@@ -336,6 +336,7 @@ DATA_TRANSFORMS = {
 ######################################################################
 
 autoencoder, autoencoder_hist = train_autoencoder(DATA_TRANSFORMS)
+torch.save(autoencoder, "autoencoder-best.pth")
 plot("Autoencoder", NUM_EPOCHS_AUTOENCODER, autoencoder_hist)
 
 classifier, classifier_hist = train_classifier(autoencoder, DATA_TRANSFORMS)

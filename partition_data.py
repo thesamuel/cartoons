@@ -8,6 +8,7 @@ from tqdm import tqdm
 from collections import defaultdict
 
 _RANDOM_SEED = 2019
+SPLIT = 0.8
 IN_DATA_DIR = './data/clean-data'
 
 
@@ -36,9 +37,28 @@ def obama_trump_tag(metadata: dict) -> Optional[str]:
         return None
 
 
-def partition_data(in_data_dir: str, out_data_dir: str, tag_func, balance_train: bool = False):
+def balance_data(ids: list, in_data_dir, tag_func) -> list:
+    cids_for_tag = defaultdict(list)
+    for cid in ids:
+        json_filename = f"{cid}.json"
+        metadata = json.load(open(in_data_dir / json_filename))
+        tag = tag_func(metadata)
+        cids_for_tag[tag].append(cid)
+
+    balanced_ids = []
+    min_train_class_len = min([len(c) for c in cids_for_tag.values()])
+    for tag in cids_for_tag:
+        for i, cid in enumerate(cids_for_tag[tag]):
+            if i >= min_train_class_len:
+                break
+            balanced_ids.append(cid)
+
+    return balanced_ids
+
+
+def partition_data(in_data_dir: str, out_data_dir: str, tag_func, balance: bool = False):
     if not os.path.exists(in_data_dir):
-        raise NotADirectoryError(f"{in_data_dir} doesn't exist")
+        raise NotADirectoryError(f"{in_data_dir} does not exist")
 
     if os.path.exists(out_data_dir):
         raise IsADirectoryError(f"{out_data_dir} already exists")
@@ -54,15 +74,15 @@ def partition_data(in_data_dir: str, out_data_dir: str, tag_func, balance_train:
     random.seed(_RANDOM_SEED)
     random.shuffle(ids)
 
-    # Split the data
-    split_1 = int(0.8 * len(ids))
-    # split_2 = int(0.9 * len(ids))
-    train_ids = set(ids[:split_1])
-    val_ids = set(ids[split_1:])
-    # test_ids = set(ids[split_2:])
+    # Balance data
+    if balance:
+        ids = balance_data(ids, in_data_dir, tag_func)
+        random.shuffle(ids)
 
-    # Keep track of classes for data balancing
-    image_filenames_for_tag = defaultdict(list)
+    # Split the data
+    split_idx = int(SPLIT * len(ids))
+    train_ids = set(ids[:split_idx])
+    val_ids = set(ids[split_idx:])
 
     # Copy data to output path in PyTorch's ImageFolder structure
     for cid in tqdm(ids):
@@ -77,35 +97,14 @@ def partition_data(in_data_dir: str, out_data_dir: str, tag_func, balance_train:
 
         # Add train or val to path
         if cid in train_ids:
-            if balance_train:
-                image_filenames_for_tag[tag].append(image_filename)
-                continue
-
-            out_class_dir = out_data_dir / "train" / tag
+            image_folder_out_dir = out_data_dir / "train" / tag
         elif cid in val_ids:
-            # copy_operations["val"][tag] = image_filename
-            out_class_dir = out_data_dir / "val" / tag
-        # elif cid in test_ids:
-        #     # copy_operations["test"][tag] = image_filename
-        #     out_class_dir = out_data_dir / "test" / tag
+            image_folder_out_dir = out_data_dir / "val" / tag
         else:
             raise RuntimeError()
 
-        os.makedirs(out_class_dir, exist_ok=True)
-        copyfile(in_data_dir / image_filename, out_class_dir / image_filename)
-
-    # Additional step for copying train files in a balanced way
-    if balance_train:
-        min_train_class_len = min([len(c) for c in image_filenames_for_tag.values()])
-
-        for tag in image_filenames_for_tag:
-            for i, image_filename in enumerate(image_filenames_for_tag[tag]):
-                if i >= min_train_class_len:
-                    break
-
-                out_class_dir = out_data_dir / "train" / tag
-                os.makedirs(out_class_dir, exist_ok=True)
-                copyfile(in_data_dir / image_filename, out_class_dir / image_filename)
+        os.makedirs(image_folder_out_dir, exist_ok=True)
+        copyfile(in_data_dir / image_filename, image_folder_out_dir / image_filename)
 
 
-partition_data(IN_DATA_DIR, './data/balanced-classifier-data-v2/', tag_func=obama_trump_tag, balance_train=True)
+partition_data(IN_DATA_DIR, './data/balanced-classifier-data-v3/', tag_func=obama_trump_tag, balance=True)

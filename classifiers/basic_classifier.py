@@ -26,7 +26,7 @@ print("Torchvision Version: ", torchvision.__version__)
 
 # Top level data directory. Here we assume the format of the directory conforms
 #   to the ImageFolder structure
-data_dir = "./data/classifier-data"
+data_dir = "./data/balanced-classifier-data-v3"
 
 # Models to choose from [resnet, alexnet, vgg, squeezenet, densenet, inception]
 model_name = "vgg"
