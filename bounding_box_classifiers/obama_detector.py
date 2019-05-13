@@ -3,7 +3,6 @@ from pathlib import Path
 
 import torch
 import torch.nn as nn
-import torch.functional as F
 from torch.optim.adam import Adam
 from torch.utils.data.dataloader import DataLoader
 from torchvision import datasets, transforms
@@ -29,7 +28,7 @@ class BasicConvNet(nn.Module):
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2)
         )
-        self.fc = nn.Linear(7 * 7 * 128, num_classes)
+        self.fc = nn.Linear(29 * 29 * 128, num_classes)
 
     def forward(self, x):
         out = self.layer1(x)
@@ -37,7 +36,7 @@ class BasicConvNet(nn.Module):
         out = self.layer3(out)
         out = out.reshape(out.size(0), -1)
         out = self.fc(out)
-        return F.softmax(out, dim=1)
+        return out
 
 
 def train(model, device, train_loader, optimizer, criterion, epoch, log_interval):
@@ -75,7 +74,7 @@ def test(model, device, test_loader, criterion):
 def main():
     # Training settings
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data-dir', type=str,
+    parser.add_argument('data_dir', type=str,
                         help='path to data directory')
     parser.add_argument('--batch-size', type=int, default=64, metavar='N',
                         help='input batch size for training (default: 64)')
@@ -104,6 +103,7 @@ def main():
 
     data_dir = Path(args.data_dir)
     input_size = 224
+    kwargs = {'num_workers': 8, 'pin_memory': True} if use_cuda else {}
     train_loader = DataLoader(
         datasets.ImageFolder(data_dir / "train",
                              transform=transforms.Compose([
@@ -112,7 +112,7 @@ def main():
                                  transforms.ToTensor(),
                                  transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
                              ])),
-        batch_size=args.batch_size, shuffle=True
+        batch_size=args.batch_size, shuffle=True, **kwargs
     )
     test_loader = DataLoader(
         datasets.ImageFolder(data_dir / "val",
@@ -122,7 +122,7 @@ def main():
                                  transforms.ToTensor(),
                                  transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
                              ])),
-        batch_size=args.batch_size, shuffle=True
+        batch_size=args.batch_size, shuffle=True, **kwargs
     )
 
     model = BasicConvNet(num_classes=2).to(device)
@@ -135,3 +135,7 @@ def main():
 
     if args.save_model:
         torch.save(model.state_dict(), f"basic-cnn-lr-{args.lr}-momentum-{args.momentum}")
+
+
+if __name__ == '__main__':
+    main()
