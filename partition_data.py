@@ -26,7 +26,7 @@ def split_data(in_data_dir: str, out_data_dir: str, ids: dict, test_size: float 
     ids_split = train_test_split(*ids.values(), test_size=test_size, shuffle=True)
     ids_split = np.reshape(ids_split, (-1, 2)).T
     assert ids_split.shape[0] == 2
-    ids_split = {stage: data for stage, data in zip(["train", "val"], ids_split.T)}
+    ids_split = {stage: data for stage, data in zip(["train", "val"], ids_split)}
 
     # Copy data to output path in PyTorch's ImageFolder structure
     for stage, data in ids_split.items():
