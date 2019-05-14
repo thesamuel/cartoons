@@ -24,13 +24,16 @@ def split_data(in_data_dir: str, out_data_dir: str, ids: dict, test_size: float 
 
     # Split data
     ids_split = train_test_split(*ids.values(), test_size=test_size, shuffle=True)
+
+    # shape: (2 x num classes), where row 0 is train and row 1 is test. 
     ids_split = np.reshape(ids_split, (-1, 2)).T
     assert ids_split.shape[0] == 2
-    ids_split = {stage: data for stage, data in zip(["train", "val"], ids_split)}
+
+    ids_split = {stage: zip(ids.keys(), data) for stage, data in zip(["train", "val"], ids_split)}
 
     # Copy data to output path in PyTorch's ImageFolder structure
-    for stage, data in ids_split.items():
-        for tag, cids in zip(ids.keys(), data):
+    for stage, data_classes in ids_split.items():
+        for tag, cids in data_classes:
             image_folder_out_dir = out_data_dir / stage / tag
             os.makedirs(image_folder_out_dir, exist_ok=False)
             for cid in cids:
