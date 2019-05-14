@@ -8,7 +8,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 
-def partition_data(in_data_dir: str, out_data_dir: str, ids: dict, test_size: float = 0.2, balance: bool = False):
+def split_data(in_data_dir: str, out_data_dir: str, ids: dict, test_size: float = 0.2, balance: bool = False):
     # Check current directory structure
     if not os.path.exists(in_data_dir):
         raise NotADirectoryError(f"{in_data_dir} does not exist")
@@ -38,7 +38,7 @@ def partition_data(in_data_dir: str, out_data_dir: str, ids: dict, test_size: fl
                 copyfile(in_data_dir / image_filename, image_folder_out_dir / image_filename)
 
 
-def obama_detector_partition():
+def obama_detector_split(in_data_dir, out_data_dir, sqlite_path):
     sql_queries = {
         "obama": """
         SELECT C.id AS id
@@ -59,7 +59,14 @@ def obama_detector_partition():
         """
     }
 
-    con = sqlite3.connect("cartoons.sqlite")
+    con = sqlite3.connect(sqlite_path)
     ids = {tag: pd.read_sql_query(query, con)['id'].to_list() for tag, query in sql_queries.items()}
+    split_data(in_data_dir, out_data_dir, ids, test_size=0.2, balance=True)
 
-    partition_data('data/clean-data', 'data/bounding-box-obama-detector', ids, test_size=0.2, balance=True)
+
+def main():
+    obama_detector_split('data/clean-data', 'data/bounding-box-obama-detector', 'cartoons.sqlite')
+
+
+if __name__ == '__main__':
+    main()
