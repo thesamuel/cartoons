@@ -44,7 +44,7 @@ def split_data(in_data_dir: str, out_data_dir: str, ids: dict, test_size: float 
 def obama_detector_split(in_data_dir, out_data_dir, sqlite_path):
     sql_queries = {
         "obama": """
-        SELECT C.id AS id
+        SELECT DISTINCT C.id AS id
         FROM BoundingBoxes as B
                  LEFT JOIN
              Cartoons as C
@@ -52,7 +52,7 @@ def obama_detector_split(in_data_dir, out_data_dir, sqlite_path):
         WHERE B.entity LIKE 'Obama';
         """,
         "not_obama": """
-        SELECT C.id AS id
+        SELECT DISTINCT C.id AS id
         FROM BoundingBoxes as B
                  LEFT JOIN
              Cartoons as C
