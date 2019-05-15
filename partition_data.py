@@ -71,24 +71,21 @@ def obama_detector_split(in_data_dir, out_data_dir, sqlite_path):
     binary_split(in_data_dir, out_data_dir, sqlite_path, sql_queries)
 
 
-def obama_detector_split(in_data_dir, out_data_dir, sqlite_path):
+def all_data_obama_detector_split(in_data_dir, out_data_dir, sqlite_path):
     sql_queries = {
         "obama": """
         SELECT DISTINCT C.id AS id
-        FROM BoundingBoxes as B
-                 LEFT JOIN
-             Cartoons as C
-             ON B.id = C.id
-        WHERE B.entity LIKE 'Obama';
+        FROM Cartoons as C
+        WHERE C.keywords LIKE '%obama%'
+           OR C.title LIKE '%obama%'
+           OR C.caption LIKE '%obama%';
         """,
         "not_obama": """
         SELECT DISTINCT C.id AS id
-        FROM BoundingBoxes as B
-                 LEFT JOIN
-             Cartoons as C
-             ON B.id = C.id
-        WHERE B.entity IS NULL
-           OR B.entity NOT LIKE 'Obama'
+        FROM Cartoons as C
+        WHERE C.keywords NOT LIKE '%obama%'
+           AND C.title NOT LIKE '%obama%'
+           AND C.caption NOT LIKE '%obama%';
         """
     }
 
@@ -96,7 +93,7 @@ def obama_detector_split(in_data_dir, out_data_dir, sqlite_path):
 
 
 def main():
-    obama_detector_split('data/clean-data', 'data/bounding-box-obama-detector', 'cartoons.sqlite')
+    all_data_obama_detector_split('data/clean-data', 'data/obama-detector', 'cartoons.sqlite')
 
 
 if __name__ == '__main__':
