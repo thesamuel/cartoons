@@ -41,6 +41,12 @@ def split_data(in_data_dir: str, out_data_dir: str, ids: dict, test_size: float 
                 copyfile(in_data_dir / image_filename, image_folder_out_dir / image_filename)
 
 
+def binary_split(in_data_dir, out_data_dir, sqlite_path, sql_queries):
+    con = sqlite3.connect(sqlite_path)
+    ids = {tag: pd.read_sql_query(query, con)['id'].to_list() for tag, query in sql_queries.items()}
+    split_data(in_data_dir, out_data_dir, ids, test_size=0.2, balance=True)
+
+
 def obama_detector_split(in_data_dir, out_data_dir, sqlite_path):
     sql_queries = {
         "obama": """
@@ -62,9 +68,31 @@ def obama_detector_split(in_data_dir, out_data_dir, sqlite_path):
         """
     }
 
-    con = sqlite3.connect(sqlite_path)
-    ids = {tag: pd.read_sql_query(query, con)['id'].to_list() for tag, query in sql_queries.items()}
-    split_data(in_data_dir, out_data_dir, ids, test_size=0.2, balance=True)
+    binary_split(in_data_dir, out_data_dir, sqlite_path, sql_queries)
+
+
+def obama_detector_split(in_data_dir, out_data_dir, sqlite_path):
+    sql_queries = {
+        "obama": """
+        SELECT DISTINCT C.id AS id
+        FROM BoundingBoxes as B
+                 LEFT JOIN
+             Cartoons as C
+             ON B.id = C.id
+        WHERE B.entity LIKE 'Obama';
+        """,
+        "not_obama": """
+        SELECT DISTINCT C.id AS id
+        FROM BoundingBoxes as B
+                 LEFT JOIN
+             Cartoons as C
+             ON B.id = C.id
+        WHERE B.entity IS NULL
+           OR B.entity NOT LIKE 'Obama'
+        """
+    }
+
+    binary_split(in_data_dir, out_data_dir, sqlite_path, sql_queries)
 
 
 def main():

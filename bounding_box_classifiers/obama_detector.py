@@ -6,22 +6,21 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data.dataloader import DataLoader
 from torchvision import datasets, transforms
+import copy
 
 
 class BasicConvNet(nn.Module):
     def __init__(self, num_classes=2):
         super().__init__()
-        self.layer1 = nn.Sequential(
+        self.features = nn.Sequential(
             nn.Conv2d(3, 32, kernel_size=3, stride=1, padding=2),
             nn.BatchNorm2d(32),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2))
-        self.layer2 = nn.Sequential(
+            nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=2),
             nn.BatchNorm2d(64),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2))
-        self.layer3 = nn.Sequential(
+            nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=2),
             nn.BatchNorm2d(128),
             nn.ReLU(),
@@ -30,12 +29,38 @@ class BasicConvNet(nn.Module):
         self.fc = nn.Linear(29 * 29 * 128, num_classes)
 
     def forward(self, x):
-        out = self.layer1(x)
-        out = self.layer2(out)
-        out = self.layer3(out)
+        out = self.features(x)
         out = out.reshape(out.size(0), -1)
         out = self.fc(out)
         return out
+
+
+def data_loaders(data_dir: str, use_cuda: bool, batch_size: int, val_batch_size: int):
+    data_dir = Path(data_dir)
+    input_size = 224
+    kwargs = {'num_workers': 8, 'pin_memory': True} if use_cuda else {}
+    train_loader = DataLoader(
+        datasets.ImageFolder(data_dir / "train",
+                             transform=transforms.Compose([
+                                 transforms.RandomResizedCrop(input_size),
+                                 transforms.RandomHorizontalFlip(),
+                                 transforms.ToTensor(),
+                                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+                             ])),
+        batch_size=batch_size, shuffle=True, **kwargs
+    )
+    test_loader = DataLoader(
+        datasets.ImageFolder(data_dir / "val",
+                             transform=transforms.Compose([
+                                 transforms.Resize(input_size),
+                                 transforms.CenterCrop(input_size),
+                                 transforms.ToTensor(),
+                                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+                             ])),
+        batch_size=val_batch_size, shuffle=True, **kwargs
+    )
+
+    return train_loader, test_loader
 
 
 def train(model, device, train_loader, optimizer, criterion, epoch, log_interval):
@@ -65,50 +90,40 @@ def test(model, device, test_loader, criterion):
             correct += pred.eq(target.view_as(pred)).sum().item()
 
     test_loss /= len(test_loader.dataset)
+    test_accuracy = correct / len(test_loader.dataset)
 
     print(f'\nTest set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)}'
-          f' ({100. * correct / len(test_loader.dataset):.0f}%)\n')
+          f' ({100. * test_accuracy:.0f}%)\n')
+
+    return test_accuracy
 
 
 def train_helper(seed: int, data_dir: str, use_cuda: bool, batch_size: int, val_batch_size: int, epochs: int,
-                 log_interval: int, lr: float, momentum: float, save_model: bool):
+                 log_interval: int, lr: float, momentum: float):
+    # Setup torch
     torch.manual_seed(seed)
     device = torch.device("cuda" if use_cuda else "cpu")
 
-    data_dir = Path(data_dir)
-    input_size = 224
-    kwargs = {'num_workers': 8, 'pin_memory': True} if use_cuda else {}
-    train_loader = DataLoader(
-        datasets.ImageFolder(data_dir / "train",
-                             transform=transforms.Compose([
-                                 transforms.RandomResizedCrop(input_size),
-                                 transforms.RandomHorizontalFlip(),
-                                 transforms.ToTensor(),
-                                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-                             ])),
-        batch_size=batch_size, shuffle=True, **kwargs
-    )
-    test_loader = DataLoader(
-        datasets.ImageFolder(data_dir / "val",
-                             transform=transforms.Compose([
-                                 transforms.Resize(input_size),
-                                 transforms.CenterCrop(input_size),
-                                 transforms.ToTensor(),
-                                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-                             ])),
-        batch_size=val_batch_size, shuffle=True, **kwargs
-    )
+    # Get data loaders
+    train_loader, test_loader = data_loaders(data_dir, use_cuda, batch_size, val_batch_size)
 
+    # Create classifier
     model = BasicConvNet(num_classes=2).to(device)
     optimizer = optim.SGD(model.parameters(), lr=lr, momentum=momentum)
     criterion = nn.CrossEntropyLoss()
 
+    # Run training loop
+    best_accuracy = 0
+    best_model = None
     for epoch in range(1, epochs + 1):
         train(model, device, train_loader, optimizer, criterion, epoch, log_interval)
-        test(model, device, test_loader, criterion)
+        epoch_accuracy = test(model, device, test_loader, criterion)
 
-    if save_model:
-        torch.save(model.state_dict(), f"basic-cnn-lr-{lr}-momentum-{momentum}-batch-size-{batch_size}")
+        if epoch_accuracy > best_accuracy:
+            best_accuracy = epoch_accuracy
+            best_model = copy.deepcopy(model.state_dict())
+
+    return best_model
 
 
 def main():
@@ -137,8 +152,12 @@ def main():
     args = parser.parse_args()
 
     use_cuda = not args.no_cuda and torch.cuda.is_available()
-    train_helper(args.seed, args.data_dir, use_cuda, args.batch_size, args.val_batch_size, args.epochs,
-                 args.log_interval, args.lr, args.momentum, args.save_model)
+    best_model = train_helper(args.seed, args.data_dir, use_cuda, args.batch_size, args.val_batch_size, args.epochs,
+                              args.log_interval, args.lr, args.momentum)
+
+    if args.save_model:
+        torch.save(best_model,
+                   f"basic-cnn-lr-{args.lr}-momentum-{args.momentum}-batch-size-{args.batch_size}-best.pth")
 
 
 if __name__ == '__main__':

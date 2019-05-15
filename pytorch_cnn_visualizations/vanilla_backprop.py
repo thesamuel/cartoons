@@ -8,10 +8,11 @@ import torch
 from misc_functions import get_example_params, convert_to_grayscale, save_gradient_images
 
 
-class VanillaBackprop():
+class VanillaBackprop:
     """
         Produces gradients generated with vanilla back propagation from the image
     """
+
     def __init__(self, model):
         self.model = model
         self.gradients = None
@@ -25,7 +26,8 @@ class VanillaBackprop():
             self.gradients = grad_in[0]
 
         # Register hook to the first layer
-        first_layer = list(self.model.features._modules.items())[0][1]
+        # TODO: make this generalizeable
+        first_layer = list(self.model.layer1._modules.items())[0][1]
         first_layer.register_backward_hook(hook_function)
 
     def generate_gradients(self, input_image, target_class):
@@ -34,20 +36,20 @@ class VanillaBackprop():
         # Zero grads
         self.model.zero_grad()
         # Target for backprop
-        one_hot_output = torch.FloatTensor(1, model_output.size()[-1]).zero_()
+        one_hot_output = torch.cuda.FloatTensor(1, model_output.size()[-1]).zero_()
         one_hot_output[0][target_class] = 1
         # Backward pass
         model_output.backward(gradient=one_hot_output)
-        # Convert Pytorch variable to numpy array
+        # Convert PyTorch variable to numpy array
         # [0] to get rid of the first channel (1,3,224,224)
-        gradients_as_arr = self.gradients.data.numpy()[0]
+        gradients_as_arr = self.gradients.data.cpu().numpy()[0]
         return gradients_as_arr
 
 
 if __name__ == '__main__':
     # Get params
     target_example = 1  # Snake
-    (original_image, prep_img, target_class, file_name_to_export, pretrained_model) =\
+    (original_image, prep_img, target_class, file_name_to_export, pretrained_model) = \
         get_example_params(target_example)
     # Vanilla backprop
     VBP = VanillaBackprop(pretrained_model)
