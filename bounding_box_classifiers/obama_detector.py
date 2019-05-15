@@ -70,6 +70,47 @@ def test(model, device, test_loader, criterion):
           f' ({100. * correct / len(test_loader.dataset):.0f}%)\n')
 
 
+def train_helper(seed: int, data_dir: str, use_cuda: bool, batch_size: int, val_batch_size: int, epochs: int,
+                 log_interval: int, lr: float, momentum: float, save_model: bool):
+    torch.manual_seed(seed)
+    device = torch.device("cuda" if use_cuda else "cpu")
+
+    data_dir = Path(data_dir)
+    input_size = 224
+    kwargs = {'num_workers': 8, 'pin_memory': True} if use_cuda else {}
+    train_loader = DataLoader(
+        datasets.ImageFolder(data_dir / "train",
+                             transform=transforms.Compose([
+                                 transforms.RandomResizedCrop(input_size),
+                                 transforms.RandomHorizontalFlip(),
+                                 transforms.ToTensor(),
+                                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+                             ])),
+        batch_size=batch_size, shuffle=True, **kwargs
+    )
+    test_loader = DataLoader(
+        datasets.ImageFolder(data_dir / "val",
+                             transform=transforms.Compose([
+                                 transforms.Resize(input_size),
+                                 transforms.CenterCrop(input_size),
+                                 transforms.ToTensor(),
+                                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+                             ])),
+        batch_size=val_batch_size, shuffle=True, **kwargs
+    )
+
+    model = BasicConvNet(num_classes=2).to(device)
+    optimizer = optim.SGD(model.parameters(), lr=lr, momentum=momentum)
+    criterion = nn.CrossEntropyLoss()
+
+    for epoch in range(1, epochs + 1):
+        train(model, device, train_loader, optimizer, criterion, epoch, log_interval)
+        test(model, device, test_loader, criterion)
+
+    if save_model:
+        torch.save(model.state_dict(), f"basic-cnn-lr-{lr}-momentum-{momentum}-batch-size-{batch_size}")
+
+
 def main():
     # Training settings
     parser = argparse.ArgumentParser()
@@ -95,45 +136,9 @@ def main():
                         help='For Saving the current Model')
     args = parser.parse_args()
 
-    torch.manual_seed(args.seed)
-
     use_cuda = not args.no_cuda and torch.cuda.is_available()
-    device = torch.device("cuda" if use_cuda else "cpu")
-
-    data_dir = Path(args.data_dir)
-    input_size = 224
-    kwargs = {'num_workers': 8, 'pin_memory': True} if use_cuda else {}
-    train_loader = DataLoader(
-        datasets.ImageFolder(data_dir / "train",
-                             transform=transforms.Compose([
-                                 transforms.RandomResizedCrop(input_size),
-                                 transforms.RandomHorizontalFlip(),
-                                 transforms.ToTensor(),
-                                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-                             ])),
-        batch_size=args.batch_size, shuffle=True, **kwargs
-    )
-    test_loader = DataLoader(
-        datasets.ImageFolder(data_dir / "val",
-                             transform=transforms.Compose([
-                                 transforms.Resize(input_size),
-                                 transforms.CenterCrop(input_size),
-                                 transforms.ToTensor(),
-                                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-                             ])),
-        batch_size=args.batch_size, shuffle=True, **kwargs
-    )
-
-    model = BasicConvNet(num_classes=2).to(device)
-    optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
-    criterion = nn.CrossEntropyLoss()
-
-    for epoch in range(1, args.epochs + 1):
-        train(model, device, train_loader, optimizer, criterion, epoch, args.log_interval)
-        test(model, device, test_loader, criterion)
-
-    if args.save_model:
-        torch.save(model.state_dict(), f"basic-cnn-lr-{args.lr}-momentum-{args.momentum}")
+    train_helper(args.seed, args.data_dir, use_cuda, args.batch_size, args.val_batch_size, args.epochs,
+                 args.log_interval, args.lr, args.momentum, args.save_model)
 
 
 if __name__ == '__main__':
