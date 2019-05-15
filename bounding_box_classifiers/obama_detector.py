@@ -3,10 +3,9 @@ from pathlib import Path
 
 import torch
 import torch.nn as nn
-from torch.optim.adam import Adam
+import torch.optim as optim
 from torch.utils.data.dataloader import DataLoader
 from torchvision import datasets, transforms
-from tqdm import tqdm, trange
 
 
 class BasicConvNet(nn.Module):
@@ -49,8 +48,8 @@ def train(model, device, train_loader, optimizer, criterion, epoch, log_interval
         loss.backward()
         optimizer.step()
         if batch_idx % log_interval == 0:
-            tqdm.write(f'Train Epoch: {epoch} [{batch_idx * len(data)}/{len(train_loader.dataset)}'
-                       f' ({100. * batch_idx / len(train_loader):.0f}%)]\tLoss: {loss.item():.6f}')
+            print(f'Train Epoch: {epoch} [{batch_idx * len(data)}/{len(train_loader.dataset)}'
+                  f' ({100. * batch_idx / len(train_loader):.0f}%)]\tLoss: {loss.item():.6f}')
 
 
 def test(model, device, test_loader, criterion):
@@ -67,8 +66,8 @@ def test(model, device, test_loader, criterion):
 
     test_loss /= len(test_loader.dataset)
 
-    tqdm.write(f'\nTest set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)}'
-               f' ({100. * correct / len(test_loader.dataset):.0f}%)\n')
+    print(f'\nTest set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)}'
+          f' ({100. * correct / len(test_loader.dataset):.0f}%)\n')
 
 
 def main():
@@ -126,10 +125,10 @@ def main():
     )
 
     model = BasicConvNet(num_classes=2).to(device)
-    optimizer = Adam(model.parameters(), lr=args.lr)
+    optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
     criterion = nn.CrossEntropyLoss()
 
-    for epoch in trange(1, args.epochs + 1):
+    for epoch in range(1, args.epochs + 1):
         train(model, device, train_loader, optimizer, criterion, epoch, args.log_interval)
         test(model, device, test_loader, criterion)
 
