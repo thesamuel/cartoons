@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data.dataloader import DataLoader
-from torchvision import datasets, transforms
+from torchvision import datasets, transforms, models
 import copy
 
 
@@ -33,6 +33,12 @@ class BasicConvNet(nn.Module):
         out = out.reshape(out.size(0), -1)
         out = self.fc(out)
         return out
+
+
+def set_parameter_requires_grad(model, feature_extracting):
+    if feature_extracting:
+        for param in model.parameters():
+            param.requires_grad = False
 
 
 def data_loaders(data_dir: str, use_cuda: bool, batch_size: int, val_batch_size: int):
@@ -99,7 +105,8 @@ def test(model, device, test_loader, criterion):
 
 
 def train_helper(seed: int, data_dir: str, use_cuda: bool, batch_size: int, val_batch_size: int, epochs: int,
-                 log_interval: int, lr: float, momentum: float):
+                 log_interval: int, lr: float, momentum: float, use_pretrained: bool = False,
+                 feature_extract: bool = True):
     # Setup torch
     torch.manual_seed(seed)
     device = torch.device("cuda" if use_cuda else "cpu")
@@ -108,8 +115,26 @@ def train_helper(seed: int, data_dir: str, use_cuda: bool, batch_size: int, val_
     train_loader, test_loader = data_loaders(data_dir, use_cuda, batch_size, val_batch_size)
 
     # Create classifier
-    model = BasicConvNet(num_classes=2).to(device)
-    optimizer = optim.SGD(model.parameters(), lr=lr, momentum=momentum)
+    model = models.vgg11_bn(pretrained=use_pretrained)
+    set_parameter_requires_grad(model, feature_extract)
+    num_features = model.classifier[6].in_features
+    model.classifier[6] = nn.Linear(num_features, 2)
+
+    model = model.to(device)
+    params_to_update = model.parameters()
+    print("Params to learn:")
+    if feature_extract:
+        params_to_update = []
+        for name, param in model.named_parameters():
+            if param.requires_grad:
+                params_to_update.append(param)
+                print("\t", name)
+    else:
+        for name, param in model.named_parameters():
+            if param.requires_grad:
+                print("\t", name)
+
+    optimizer = optim.SGD(params_to_update, lr=lr, momentum=momentum)
     criterion = nn.CrossEntropyLoss()
 
     # Run training loop
