@@ -41,10 +41,10 @@ def split_data(in_data_dir: str, out_data_dir: str, ids: dict, test_size: float 
                 copyfile(in_data_dir / image_filename, image_folder_out_dir / image_filename)
 
 
-def binary_split(in_data_dir, out_data_dir, sqlite_path, sql_queries):
+def sql_split(in_data_dir, out_data_dir, sqlite_path, sql_queries, test_size=0.2, balance=True):
     con = sqlite3.connect(sqlite_path)
     ids = {tag: pd.read_sql_query(query, con)['id'].to_list() for tag, query in sql_queries.items()}
-    split_data(in_data_dir, out_data_dir, ids, test_size=0.2, balance=True)
+    split_data(in_data_dir, out_data_dir, ids, test_size=test_size, balance=balance)
 
 
 def obama_detector_split(in_data_dir, out_data_dir, sqlite_path):
@@ -68,7 +68,7 @@ def obama_detector_split(in_data_dir, out_data_dir, sqlite_path):
         """
     }
 
-    binary_split(in_data_dir, out_data_dir, sqlite_path, sql_queries)
+    sql_split(in_data_dir, out_data_dir, sqlite_path, sql_queries)
 
 
 def all_data_obama_detector_split(in_data_dir, out_data_dir, sqlite_path):
@@ -89,11 +89,41 @@ def all_data_obama_detector_split(in_data_dir, out_data_dir, sqlite_path):
         """
     }
 
-    binary_split(in_data_dir, out_data_dir, sqlite_path, sql_queries)
+    sql_split(in_data_dir, out_data_dir, sqlite_path, sql_queries)
+
+
+def held_out_split(in_data_dir, out_data_dir, sqlite_path):
+    sql_queries = {
+        "obama": """
+        SELECT *
+        FROM Cartoons as C
+        WHERE C.keywords LIKE '%obama%'
+           OR C.title LIKE '%obama%'
+           OR C.caption LIKE '%obama%';
+        """,
+        "not_obama": """
+        SELECT *
+        FROM Cartoons as C
+        WHERE C.keywords NOT LIKE '%obama%'
+           AND C.title NOT LIKE '%obama%'
+           AND C.caption NOT LIKE '%obama%';
+        """
+    }
+
+    con = sqlite3.connect(sqlite_path)
+
+    # Build up table for authors
+    ids = {}
+    for tag, query in sql_queries.items():
+        df = pd.read_sql_query(query, con)
+        predicate = (df["author"] != "ColeJ") & (df["author"] != "PlantB")
+        ids[tag] = df[predicate]['id'].drop_duplicates().to_list()
+
+    split_data(in_data_dir, out_data_dir, ids, test_size=0.0, balance=True)
 
 
 def main():
-    all_data_obama_detector_split('data/clean-data', 'data/obama-detector', 'cartoons.sqlite')
+    held_out_split('data', 'partitioned_data/held-out-author-obama', 'metadata/cartoons.sqlite')
 
 
 if __name__ == '__main__':
