@@ -1,5 +1,0 @@
-# img_path = data_dir + "/train/obama/45165.jpg"
-# original_image = Image.open(img_path).convert('RGB')
-# example_x = preprocess_image(original_image, resize_im=True)
-# example_x = example_x.to(device)
-# example_y = 1
