@@ -62,9 +62,9 @@ class GradCam():
         # model_output is the final output of the model (1, 1000)
         conv_output, model_output = self.extractor.forward_pass(input_image)
         if target_class is None:
-            target_class = np.argmax(model_output.data.numpy())
+            target_class = np.argmax(model_output.data.cpu().numpy())
         # Target for backprop
-        one_hot_output = torch.FloatTensor(1, model_output.size()[-1]).zero_()
+        one_hot_output = torch.cuda.FloatTensor(1, model_output.size()[-1]).zero_()
         one_hot_output[0][target_class] = 1
         # Zero grads
         self.model.features.zero_grad()
@@ -72,9 +72,9 @@ class GradCam():
         # Backward pass with specified target
         model_output.backward(gradient=one_hot_output, retain_graph=True)
         # Get hooked gradients
-        guided_gradients = self.extractor.gradients.data.numpy()[0]
+        guided_gradients = self.extractor.gradients.data.cpu().numpy()[0]
         # Get convolution outputs
-        target = conv_output.data.numpy()[0]
+        target = conv_output.data.cpu().numpy()[0]
         # Get weights from gradients
         weights = np.mean(guided_gradients, axis=(1, 2))  # Take averages for each gradient
         # Create empty numpy array for cam
