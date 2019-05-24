@@ -1,7 +1,7 @@
-
 from torch.utils.data import Dataset, DataLoader
 import cv2
 from hart_pytorch.util import *
+
 
 # Decorator.  Resizes images and bboxes to the given size.
 # In the dataset subclasses you only need to return a list of original
@@ -23,6 +23,7 @@ def resize_and_normalize(getitem):
             bboxes[i][3] *= self._rows / rows
 
         return np.array(images), np.array(bboxes), seqlen
+
     return new_getitem
 
 

@@ -8,6 +8,7 @@ from hart_pytorch.util import *
 
 logging.getLogger().setLevel('INFO')
 
+
 def get_presence(batch_size, seqlen, n_glims, lengths):
     '''
     Generates a weight tensor indicating whether the object indeed exists.
@@ -70,49 +71,49 @@ valid_seqlen = None if args.validate_complete_sequence else args.seqlen
 if args.dataset == 'kth':
     frames_dir = os.path.join(args.kth_dir, 'frames')
     bbox_info_train = os.path.join(
-            args.kth_dir, 'KTHBoundingBoxInfoTrain.txt')
+        args.kth_dir, 'KTHBoundingBoxInfoTrain.txt')
     bbox_info_valid = os.path.join(
-            args.kth_dir, 'KTHBoundingBoxInfoValidation.txt')
+        args.kth_dir, 'KTHBoundingBoxInfoValidation.txt')
     train_dataset = dataset.KTHDataset(
-            frames_dir, bbox_info_train, seqlen=args.seqlen,
-            rows=image_size[0], cols=image_size[1])
+        frames_dir, bbox_info_train, seqlen=args.seqlen,
+        rows=image_size[0], cols=image_size[1])
     valid_dataset = dataset.KTHDataset(
-            frames_dir, bbox_info_valid, seqlen=valid_seqlen,
-            rows=image_size[0], cols=image_size[1])
+        frames_dir, bbox_info_valid, seqlen=valid_seqlen,
+        rows=image_size[0], cols=image_size[1])
 elif args.dataset == 'imagenet':
     data_dir = os.path.join(args.imagenet_dir, 'Data/VID')
     anno_dir = os.path.join(args.imagenet_dir, 'Annotations/VID')
     train_dataset = dataset.ImagenetVIDDataset(
-            os.path.join(data_dir, 'train'),
-            os.path.join(args.imagenet_dir, 'train-pkl'),
-            os.path.join(anno_dir, 'train'),
-            seqlen=args.seqlen,
-            rows=image_size[0], cols=image_size[1])
+        os.path.join(data_dir, 'train'),
+        os.path.join(args.imagenet_dir, 'train-pkl'),
+        os.path.join(anno_dir, 'train'),
+        seqlen=args.seqlen,
+        rows=image_size[0], cols=image_size[1])
     valid_dataset = dataset.ImagenetVIDDataset(
-            os.path.join(data_dir, 'val'),
-            os.path.join(args.imagenet_dir, 'valid-pkl'),
-            os.path.join(anno_dir, 'val'),
-            seqlen=valid_seqlen,
-            rows=image_size[0], cols=image_size[1])
+        os.path.join(data_dir, 'val'),
+        os.path.join(args.imagenet_dir, 'valid-pkl'),
+        os.path.join(anno_dir, 'val'),
+        seqlen=valid_seqlen,
+        rows=image_size[0], cols=image_size[1])
 
 train_dataloader = dataset.VideoDataLoader(
-        train_dataset, args.batchsize, num_workers=args.num_workers)
+    train_dataset, args.batchsize, num_workers=args.num_workers)
 valid_dataloader = dataset.VideoDataLoader(
-        valid_dataset, valid_batch_size, num_workers=args.num_workers)
+    valid_dataset, valid_batch_size, num_workers=args.num_workers)
 
 # Model
 feature_extractor = cuda(alexnet.AlexNetModel(n_out_feature_maps=args.n_dfn_channels))
 attender = cuda(attention.RATMAttention(image_size, glim_size))
 cell = cuda(attention.AttentionCell(
-        args.statesize,
-        image_size,
-        glim_size,
-        args.statesize,
-        feature_extractor,
-        attender,
-        args.zoneout,
-        n_glims=n_glims,
-        n_dfn_channels=args.n_dfn_channels))
+    args.statesize,
+    image_size,
+    glim_size,
+    args.statesize,
+    feature_extractor,
+    attender,
+    args.zoneout,
+    n_glims=n_glims,
+    n_dfn_channels=args.n_dfn_channels))
 tracker = cuda(hart.HART(cell))
 weights = [1, 1, 1, 1]
 al = cuda(adaptive_loss.AdaptiveLoss(weights=weights))
@@ -149,25 +150,25 @@ while True:
         images, bboxes, lengths = tovar(_images, _bboxes, _lengths)
         bboxes = bboxes.unsqueeze(2).expand(args.batchsize, args.seqlen, n_glims, 4)
         presences = tovar(
-                get_presence(args.batchsize, args.seqlen, n_glims, lengths))
+            get_presence(args.batchsize, args.seqlen, n_glims, lengths))
 
         bbox_pred, atts, mask_logits, bbox_from_att, bbox_from_att_nobias, \
-                pres, dfn_l2, raw_glims, apps = tracker(
-                        images, bboxes[:, 0], presences[:, 0])
+        pres, dfn_l2, raw_glims, apps = tracker(
+            images, bboxes[:, 0], presences[:, 0])
 
         # Loss computation
         bbox_loss, att_intersection_loss, att_area_loss, obj_mask_xe, iou_mean = \
-                tracker.losses(
-                        bbox_pred,
-                        bbox_from_att,
-                        bboxes,
-                        pres,
-                        presences,
-                        mask_logits,
-                        image_size[0],
-                        image_size[1],
-                        )
-        #att_loss = att_intersection_loss + att_area_loss
+            tracker.losses(
+                bbox_pred,
+                bbox_from_att,
+                bboxes,
+                pres,
+                presences,
+                mask_logits,
+                image_size[0],
+                image_size[1],
+            )
+        # att_loss = att_intersection_loss + att_area_loss
 
         losses = [bbox_loss, att_intersection_loss, att_area_loss, obj_mask_xe]
         loss = al(*losses)
@@ -205,13 +206,13 @@ while True:
                                  'attention-intersection-loss',
                                  'attention-area-loss',
                                  'mask-cross-entropy',
-                                 ]
-                             )
+                             ]
+                         )
                          )
         wm.heatmap(
-                tonumpy(apps[0, :, 0]),
-                win='app',
-                )
+            tonumpy(apps[0, :, 0]),
+            win='app',
+        )
 
     print(tonumpy(bboxes))
     print(tonumpy(bbox_pred))
@@ -232,11 +233,11 @@ while True:
         seqlen = images.size()[1]
         bboxes = bboxes.unsqueeze(2).expand(valid_batch_size, seqlen, n_glims, 4)
         presences = tovar(
-                get_presence(valid_batch_size, seqlen, n_glims, lengths))
+            get_presence(valid_batch_size, seqlen, n_glims, lengths))
 
         bbox_pred, atts, mask_logits, bbox_from_att, bbox_from_att_nobias, \
-                pres, _, raw_glims, apps = tracker(
-                        images, bboxes[:, 0], presences[:, 0])
+        pres, _, raw_glims, apps = tracker(
+            images, bboxes[:, 0], presences[:, 0])
 
         current_iou = toscalar(iou(bbox_pred, bboxes).mean())
         print('VALID', epoch, current_iou)
@@ -279,14 +280,14 @@ while True:
                 wm.append_mpl_figure_to_sequence(name, fig)
 
             wm.display_mpl_figure_sequence(
-                    name,
-                    win=name,
-                    opts=dict(title=name, fps=10),
-                    )
+                name,
+                win=name,
+                opts=dict(title=name, fps=10),
+            )
             wm.heatmap(
-                    tonumpy(apps[0, :, 0]),
-                    win='app',
-                    )
+                tonumpy(apps[0, :, 0]),
+                win='app',
+            )
 
     avg_iou = avg_iou / args.max_iter_per_epoch
     print('VALID-AVG', epoch, avg_iou)

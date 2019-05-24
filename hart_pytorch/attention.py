@@ -4,14 +4,16 @@ from torch.nn import init
 from hart_pytorch.dfn import DynamicConvFilter, DynamicConvFilterGenerator
 from hart_pytorch.zoneout import ZoneoutLSTMCell
 from hart_pytorch.util import *
+from hart_pytorch import util
+
 
 def gaussian_masks(c, d, s, len_, glim_len):
-    '''
+    """
     c, d, s: 2D Tensor (batch_size, n_glims)
     len_, glim_len: int
     returns: 4D Tensor (batch_size, n_glims, glim_len, len_)
         each row is a 1D Gaussian
-    '''
+    """
     batch_size, n_glims = c.size()
 
     # The original HART code did not shift the coordinates by
@@ -36,13 +38,13 @@ def gaussian_masks(c, d, s, len_, glim_len):
 
 
 def extract_gaussian_glims(x, a, glim_size):
-    '''
+    """
     x: 4D Tensor (batch_size, nchannels, nrows, ncols)
     a: 3D Tensor (batch_size, n_glims, att_params)
         att_params: (cx, cy, dx, dy, sx, sy)
     returns:
         5D Tensor (batch_size, n_glims, nchannels, n_glim_rows, n_glim_cols)
-    '''
+    """
     batch_size, n_glims, _ = a.size()
     cx, cy, dx, dy, sx, sy = T.unbind(a, -1)
     _, nchannels, nrows, ncols = x.size()
@@ -65,28 +67,29 @@ def extract_gaussian_glims(x, a, glim_size):
 
     return g
 
+
 class RATMAttention(nn.Module):
-    '''
+    """
     [cx, cy, dx, dy, sx, sy]
     0 <= cx, cy <= 1
     0 <= dx, dy <= 1
-    '''
-    att_params = 6      # no. of parameters for attention parameterization
+    """
+    att_params = 6  # no. of parameters for attention parameterization
 
     def __init__(self, x_size, glim_size):
-        '''
+        """
         x_size: [n_image_rows, n_image_cols]
         glim_size: [n_glim_rows, n_glim_cols]
-        '''
+        """
         nn.Module.__init__(self)
         self.x_size = x_size
         self.glim_size = glim_size
 
     def forward(self, x, spatial_att):
-        '''
+        """
         x: 4D Tensor (batch_size, nchannels, n_image_rows, n_image_cols)
         spatial_att: 3D Tensor (batch_size, n_glims, att_params) relative scales
-        '''
+        """
         # (batch_size, n_glims, att_params)
         absolute_att = self._to_absolute_attention(spatial_att)
         glims = extract_gaussian_glims(x, absolute_att, self.glim_size)
@@ -94,10 +97,10 @@ class RATMAttention(nn.Module):
         return glims
 
     def att_to_bbox(self, spatial_att):
-        '''
+        """
         spatial_att: (..., 6) [cx, cy, dx, dy, sx, sy] relative scales ]0, 1[
         return: (..., 4) [cx, cy, w, h] absolute scales
-        '''
+        """
         cx = spatial_att[..., 0] * self.x_size[1]
         cy = spatial_att[..., 1] * self.x_size[0]
         w = T.abs(spatial_att[..., 2]) * (self.x_size[1] - 1)
@@ -106,10 +109,10 @@ class RATMAttention(nn.Module):
         return bbox
 
     def bbox_to_att(self, bbox):
-        '''
+        """
         bbox: (..., 4) [cx, cy, w, h] absolute scales
         return: (..., 6) [cx, cy, dx, dy, sx, sy] relative scales ]0, 1[
-        '''
+        """
         cx = bbox[..., 0] / self.x_size[1]
         cy = bbox[..., 1] / self.x_size[0]
         dx = bbox[..., 2] / (self.x_size[1] - 1)
@@ -127,17 +130,17 @@ class RATMAttention(nn.Module):
         return c, d, s
 
     def _to_absolute_attention(self, params):
-        '''
+        """
         params: 3D Tensor (batch_size, n_glims, att_params)
-        '''
+        """
         n_image_rows, n_image_cols = self.x_size
         n_glim_rows, n_glim_cols = self.glim_size
         cx, dx, sx = T.unbind(params[..., ::2], -1)
         cy, dy, sy = T.unbind(params[..., 1::2], -1)
         cx, dx, sx = self._to_axis_attention(
-                n_image_cols, n_glim_cols, cx, dx, sx)
+            n_image_cols, n_glim_cols, cx, dx, sx)
         cy, dy, sy = self._to_axis_attention(
-                n_image_rows, n_glim_rows, cy, dy, sy)
+            n_image_rows, n_glim_rows, cy, dy, sy)
 
         # ap is now the absolute coordinate/scale on image
         # (batch_size, n_glims, att_params)
@@ -171,71 +174,72 @@ class AttentionCell(nn.Module):
         glim_flatsize = np.asscalar(np.prod(glim_size))
 
         self.pre_dfngen = DynamicConvFilterGenerator(
-                app_size,
-                feature_extractor.n_out_channels,
-                n_dfn_channels,
-                (1, 1))
+            app_size,
+            feature_extractor.n_out_channels,
+            n_dfn_channels,
+            (1, 1))
         self.pre_dfn = DynamicConvFilter(
-                feature_extractor.n_out_channels,
-                n_dfn_channels,
-                (1, 1))
+            feature_extractor.n_out_channels,
+            n_dfn_channels,
+            (1, 1))
         self.dfngen = DynamicConvFilterGenerator(
-                app_size,
-                n_dfn_channels,
-                n_dfn_channels,
-                (3, 3))
+            app_size,
+            n_dfn_channels,
+            n_dfn_channels,
+            (3, 3))
         self.dfn = DynamicConvFilter(
-                n_dfn_channels,
-                n_dfn_channels,
-                (3, 3),
-                padding=1)
+            n_dfn_channels,
+            n_dfn_channels,
+            (3, 3),
+            padding=1)
         self.proj = nn.Sequential(
-                nn.Linear(
-                    n_glims * (
+            nn.Linear(
+                n_glims * (
                         n_dfn_channels *
                         feature_extractor.compute_output_flatsize(glim_size) +
                         self.attender.att_params),
-                    state_size),
-                nn.ELU(),
-                )
+                state_size),
+            nn.ELU(),
+        )
         self.app_predictor = nn.Sequential(
-                nn.Linear(state_size, n_glims * app_size),
-                nn.ELU(),
-                )
+            nn.Linear(state_size, n_glims * app_size),
+            nn.ELU(),
+        )
         self.rnncell = ZoneoutLSTMCell(state_size, state_size, p=zoneout_prob)
         self.masker = nn.Conv2d(n_dfn_channels, 1, (1, 1))
         self.mask_feat_extractor = nn.Sequential(
-                nn.Linear(
-                    feature_extractor.compute_output_flatsize(glim_size),
-                    mask_feat_size
-                    ),
-                nn.ELU(),
-                )
+            nn.Linear(
+                feature_extractor.compute_output_flatsize(glim_size),
+                mask_feat_size
+            ),
+            nn.ELU(),
+        )
         att_pred_output_layer = nn.Linear(state_size, n_glims * self.att_params)
         init.uniform(att_pred_output_layer.weight, -1e-3, 1e-3)
         init.constant(att_pred_output_layer.bias, 0)
         self.att_pred_layer = nn.Sequential(
-                nn.Linear(state_size + mask_feat_size * n_glims, state_size),
-                nn.ELU(),
-                att_pred_output_layer,
-                nn.Tanh(),
-                )
+            nn.Linear(state_size + mask_feat_size * n_glims, state_size),
+            nn.ELU(),
+            att_pred_output_layer,
+            nn.Tanh(),
+        )
         self.att_delta_scale_logit = nn.Parameter(
-                T.zeros(n_glims, self.att_params) +
-                att_scale_logit_init)
-        self._att_bias = nn.Parameter(T.zeros(self.att_params)) # ?
-        self._att_scale = .25           # ???
+            T.zeros(n_glims, self.att_params) +
+            att_scale_logit_init
+        )
+        self._att_bias = nn.Parameter(T.zeros(self.att_params))  # ?
+        self._att_scale = .25  # ???
 
     @property
     def att_bias(self):
         return self._att_scale * T.tanh(self._att_bias)
 
     def zero_state(self, x, bbox, presence):
-        '''
+        """
         x: 4D (batch_size, nchannels, nrows, ncols)
         bbox: 3D (batch_size, nobjects, 4) [cx, cy, w, h]
         presence: 2D (batch_size, nobjects)
-        '''
+        """
         batch_size = x.size()[0]
         # (batch_size, nobjects = nglims, att_params)
         att = self.attender.bbox_to_att(bbox)
@@ -251,7 +255,7 @@ class AttentionCell(nn.Module):
         return rnn_output, rnn_state, att, app
 
     def extract_features(self, x, spatial_att, appearance):
-        '''
+        """
         x: 4D Tensor (batch_size, nchannels, n_image_rows, n_image_cols)
         spatial_att: 3D Tensor (batch_size, n_glims, att_params)
         appearance: 3D Tensor (batch_size, n_glims, app_size)
@@ -265,7 +269,7 @@ class AttentionCell(nn.Module):
             (batch_size, n_glims, raw_feat_rows, raw_feat_cols)
         dfn_norm: L2 norm of generated DFN parameters
         prenorm_glims: as @glims, but not contrast-normalized (for viz)
-        '''
+        """
         # Extract raw glimpse from spatial attention
         # (batch_size, n_glims, nchannels, n_glim_rows, n_glim_cols)
         prenorm_glims = glims = self.attender(x, spatial_att)
@@ -302,7 +306,7 @@ class AttentionCell(nn.Module):
             mask = F.sigmoid(mask_logit)
             masked_feats = feats * mask
             mask_logit = mask_logit.squeeze(1).view(
-                    batch_size, n_glims, raw_feat_rows, raw_feat_cols)
+                batch_size, n_glims, raw_feat_rows, raw_feat_cols)
         else:
             masked_feats = feats
             mask_logit = None
@@ -312,14 +316,13 @@ class AttentionCell(nn.Module):
         # same vector.  Not sure if I need to make a separate one for each
         # glimpse.
         projected_feats = self.proj(
-                T.cat([
-                    masked_feats.view(batch_size, -1),
-                    spatial_att.view(batch_size, -1),
-                    ], 1)
-                )
+            T.cat([
+                masked_feats.view(batch_size, -1),
+                spatial_att.view(batch_size, -1),
+            ], dim=1)
+        )
 
         return glims, projected_feats, mask_logit, dfn_l2, prenorm_glims
-
 
     def forward(self,
                 x,
@@ -327,7 +330,7 @@ class AttentionCell(nn.Module):
                 appearance,
                 presence,
                 hidden_state):
-        '''
+        """
         x: 4D (batch_size, nchannels, nrows, ncols)
         spatial_att: 3D (batch_size, n_glims, att_params)
             [cx, cy, dx, dy, sx, sy]
@@ -344,22 +347,20 @@ class AttentionCell(nn.Module):
         mask_logit: (batch_size, n_glims, raw_feat_rows, raw_feat_cols)
         mask_feats: (batch_size, n_glims, mask_feat_size)
         next_state: something shouldn't care
-        '''
+        """
         batch_size = x.size()[0]
 
         glims, feats, mask_logit, dfn_l2, raw_glims = self.extract_features(
-                x, spatial_att, appearance)
+            x, spatial_att, appearance)
 
         rnn_output, next_state = self.rnncell(feats, hidden_state)
 
         # Combine mask with RNN state
         mask_feats = self.mask_feat_extractor(
-                mask_logit.view(batch_size * self.n_glims, -1))
-        att_input = T.cat(
-                [rnn_output, mask_feats.view(batch_size, -1)],
-                1)
+            mask_logit.view(batch_size * self.n_glims, -1))
+        att_input = T.cat([rnn_output, mask_feats.view(batch_size, -1)], dim=1)
         mask_feats = mask_feats.view(
-                batch_size, self.n_glims, self.mask_feat_size)
+            batch_size, self.n_glims, self.mask_feat_size)
 
         # Compute the predicted 
         att_pred = self.att_pred_layer(att_input)
@@ -373,14 +374,14 @@ class AttentionCell(nn.Module):
         new_app = new_app.view(batch_size, self.n_glims, self.app_size)
 
         return (
-                new_att,
-                new_app,
-                presence,
-                next_state,
-                rnn_output,
-                glims,
-                mask_logit,
-                mask_feats,
-                dfn_l2,
-                raw_glims,
-                )
+            new_att,
+            new_app,
+            presence,
+            next_state,
+            rnn_output,
+            glims,
+            mask_logit,
+            mask_feats,
+            dfn_l2,
+            raw_glims,
+        )
