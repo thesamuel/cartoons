@@ -1,0 +1,463 @@
+{
+  "textAnnotations": [
+    {
+      "locale": "en",
+      "description": "TEA WORLD\n",
+      "boundingPoly": {
+        "vertices": [
+          {
+            "x": 34,
+            "y": 8
+          },
+          {
+            "x": 83,
+            "y": 8
+          },
+          {
+            "x": 83,
+            "y": 17
+          },
+          {
+            "x": 34,
+            "y": 17
+          }
+        ]
+      }
+    },
+    {
+      "description": "TEA",
+      "boundingPoly": {
+        "vertices": [
+          {
+            "x": 34,
+            "y": 8
+          },
+          {
+            "x": 49,
+            "y": 8
+          },
+          {
+            "x": 49,
+            "y": 17
+          },
+          {
+            "x": 34,
+            "y": 17
+          }
+        ]
+      }
+    },
+    {
+      "description": "WORLD",
+      "boundingPoly": {
+        "vertices": [
+          {
+            "x": 50,
+            "y": 8
+          },
+          {
+            "x": 83,
+            "y": 8
+          },
+          {
+            "x": 83,
+            "y": 17
+          },
+          {
+            "x": 50,
+            "y": 17
+          }
+        ]
+      }
+    }
+  ],
+  "fullTextAnnotation": {
+    "pages": [
+      {
+        "property": {
+          "detectedLanguages": [
+            {
+              "languageCode": "en"
+            }
+          ]
+        },
+        "width": 600,
+        "height": 399,
+        "blocks": [
+          {
+            "property": {
+              "detectedLanguages": [
+                {
+                  "languageCode": "en"
+                }
+              ]
+            },
+            "boundingBox": {
+              "vertices": [
+                {
+                  "x": 34,
+                  "y": 8
+                },
+                {
+                  "x": 83,
+                  "y": 8
+                },
+                {
+                  "x": 83,
+                  "y": 17
+                },
+                {
+                  "x": 34,
+                  "y": 17
+                }
+              ]
+            },
+            "paragraphs": [
+              {
+                "property": {
+                  "detectedLanguages": [
+                    {
+                      "languageCode": "en"
+                    }
+                  ]
+                },
+                "boundingBox": {
+                  "vertices": [
+                    {
+                      "x": 34,
+                      "y": 8
+                    },
+                    {
+                      "x": 83,
+                      "y": 8
+                    },
+                    {
+                      "x": 83,
+                      "y": 17
+                    },
+                    {
+                      "x": 34,
+                      "y": 17
+                    }
+                  ]
+                },
+                "words": [
+                  {
+                    "property": {
+                      "detectedLanguages": [
+                        {
+                          "languageCode": "en"
+                        }
+                      ]
+                    },
+                    "boundingBox": {
+                      "vertices": [
+                        {
+                          "x": 34,
+                          "y": 8
+                        },
+                        {
+                          "x": 49,
+                          "y": 8
+                        },
+                        {
+                          "x": 49,
+                          "y": 17
+                        },
+                        {
+                          "x": 34,
+                          "y": 17
+                        }
+                      ]
+                    },
+                    "symbols": [
+                      {
+                        "property": {
+                          "detectedLanguages": [
+                            {
+                              "languageCode": "en"
+                            }
+                          ]
+                        },
+                        "boundingBox": {
+                          "vertices": [
+                            {
+                              "x": 34,
+                              "y": 8
+                            },
+                            {
+                              "x": 38,
+                              "y": 8
+                            },
+                            {
+                              "x": 38,
+                              "y": 16
+                            },
+                            {
+                              "x": 34,
+                              "y": 16
+                            }
+                          ]
+                        },
+                        "text": "T"
+                      },
+                      {
+                        "property": {
+                          "detectedLanguages": [
+                            {
+                              "languageCode": "en"
+                            }
+                          ]
+                        },
+                        "boundingBox": {
+                          "vertices": [
+                            {
+                              "x": 39,
+                              "y": 8
+                            },
+                            {
+                              "x": 44,
+                              "y": 8
+                            },
+                            {
+                              "x": 44,
+                              "y": 16
+                            },
+                            {
+                              "x": 39,
+                              "y": 16
+                            }
+                          ]
+                        },
+                        "text": "E"
+                      },
+                      {
+                        "property": {
+                          "detectedLanguages": [
+                            {
+                              "languageCode": "en"
+                            }
+                          ],
+                          "detectedBreak": {
+                            "type": "SPACE"
+                          }
+                        },
+                        "boundingBox": {
+                          "vertices": [
+                            {
+                              "x": 45,
+                              "y": 8
+                            },
+                            {
+                              "x": 49,
+                              "y": 8
+                            },
+                            {
+                              "x": 49,
+                              "y": 17
+                            },
+                            {
+                              "x": 45,
+                              "y": 17
+                            }
+                          ]
+                        },
+                        "text": "A"
+                      }
+                    ]
+                  },
+                  {
+                    "property": {
+                      "detectedLanguages": [
+                        {
+                          "languageCode": "en"
+                        }
+                      ]
+                    },
+                    "boundingBox": {
+                      "vertices": [
+                        {
+                          "x": 50,
+                          "y": 8
+                        },
+                        {
+                          "x": 83,
+                          "y": 8
+                        },
+                        {
+                          "x": 83,
+                          "y": 17
+                        },
+                        {
+                          "x": 50,
+                          "y": 17
+                        }
+                      ]
+                    },
+                    "symbols": [
+                      {
+                        "property": {
+                          "detectedLanguages": [
+                            {
+                              "languageCode": "en"
+                            }
+                          ]
+                        },
+                        "boundingBox": {
+                          "vertices": [
+                            {
+                              "x": 50,
+                              "y": 8
+                            },
+                            {
+                              "x": 53,
+                              "y": 8
+                            },
+                            {
+                              "x": 53,
+                              "y": 17
+                            },
+                            {
+                              "x": 50,
+                              "y": 17
+                            }
+                          ]
+                        },
+                        "text": "W"
+                      },
+                      {
+                        "property": {
+                          "detectedLanguages": [
+                            {
+                              "languageCode": "en"
+                            }
+                          ]
+                        },
+                        "boundingBox": {
+                          "vertices": [
+                            {
+                              "x": 56,
+                              "y": 10
+                            },
+                            {
+                              "x": 62,
+                              "y": 10
+                            },
+                            {
+                              "x": 62,
+                              "y": 16
+                            },
+                            {
+                              "x": 56,
+                              "y": 16
+                            }
+                          ]
+                        },
+                        "text": "O"
+                      },
+                      {
+                        "property": {
+                          "detectedLanguages": [
+                            {
+                              "languageCode": "en"
+                            }
+                          ]
+                        },
+                        "boundingBox": {
+                          "vertices": [
+                            {
+                              "x": 62,
+                              "y": 9
+                            },
+                            {
+                              "x": 66,
+                              "y": 9
+                            },
+                            {
+                              "x": 66,
+                              "y": 17
+                            },
+                            {
+                              "x": 62,
+                              "y": 17
+                            }
+                          ]
+                        },
+                        "text": "R"
+                      },
+                      {
+                        "property": {
+                          "detectedLanguages": [
+                            {
+                              "languageCode": "en"
+                            }
+                          ]
+                        },
+                        "boundingBox": {
+                          "vertices": [
+                            {
+                              "x": 67,
+                              "y": 8
+                            },
+                            {
+                              "x": 75,
+                              "y": 8
+                            },
+                            {
+                              "x": 75,
+                              "y": 16
+                            },
+                            {
+                              "x": 67,
+                              "y": 16
+                            }
+                          ]
+                        },
+                        "text": "L"
+                      },
+                      {
+                        "property": {
+                          "detectedLanguages": [
+                            {
+                              "languageCode": "en"
+                            }
+                          ],
+                          "detectedBreak": {
+                            "type": "EOL_SURE_SPACE"
+                          }
+                        },
+                        "boundingBox": {
+                          "vertices": [
+                            {
+                              "x": 76,
+                              "y": 9
+                            },
+                            {
+                              "x": 83,
+                              "y": 9
+                            },
+                            {
+                              "x": 83,
+                              "y": 17
+                            },
+                            {
+                              "x": 76,
+                              "y": 17
+                            }
+                          ]
+                        },
+                        "text": "D"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "blockType": "TEXT"
+          }
+        ]
+      }
+    ],
+    "text": "TEA WORLD\n"
+  }
+}

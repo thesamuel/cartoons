@@ -1,0 +1,520 @@
+{
+  "textAnnotations": [
+    {
+      "locale": "fil",
+      "description": "PLOT TO\nNG\n",
+      "boundingPoly": {
+        "vertices": [
+          {
+            "x": 64,
+            "y": 81
+          },
+          {
+            "x": 138,
+            "y": 81
+          },
+          {
+            "x": 138,
+            "y": 141
+          },
+          {
+            "x": 64,
+            "y": 141
+          }
+        ]
+      }
+    },
+    {
+      "description": "PLOT",
+      "boundingPoly": {
+        "vertices": [
+          {
+            "x": 64,
+            "y": 87
+          },
+          {
+            "x": 107,
+            "y": 83
+          },
+          {
+            "x": 109,
+            "y": 113
+          },
+          {
+            "x": 67,
+            "y": 117
+          }
+        ]
+      }
+    },
+    {
+      "description": "TO",
+      "boundingPoly": {
+        "vertices": [
+          {
+            "x": 114,
+            "y": 83
+          },
+          {
+            "x": 135,
+            "y": 81
+          },
+          {
+            "x": 138,
+            "y": 111
+          },
+          {
+            "x": 117,
+            "y": 113
+          }
+        ]
+      }
+    },
+    {
+      "description": "NG",
+      "boundingPoly": {
+        "vertices": [
+          {
+            "x": 85,
+            "y": 111
+          },
+          {
+            "x": 121,
+            "y": 111
+          },
+          {
+            "x": 121,
+            "y": 141
+          },
+          {
+            "x": 85,
+            "y": 141
+          }
+        ]
+      }
+    }
+  ],
+  "fullTextAnnotation": {
+    "pages": [
+      {
+        "property": {
+          "detectedLanguages": [
+            {
+              "languageCode": "fil"
+            }
+          ]
+        },
+        "width": 600,
+        "height": 853,
+        "blocks": [
+          {
+            "property": {
+              "detectedLanguages": [
+                {
+                  "languageCode": "fil"
+                }
+              ]
+            },
+            "boundingBox": {
+              "vertices": [
+                {
+                  "x": 64,
+                  "y": 84
+                },
+                {
+                  "x": 136,
+                  "y": 81
+                },
+                {
+                  "x": 139,
+                  "y": 141
+                },
+                {
+                  "x": 67,
+                  "y": 144
+                }
+              ]
+            },
+            "paragraphs": [
+              {
+                "property": {
+                  "detectedLanguages": [
+                    {
+                      "languageCode": "fil"
+                    }
+                  ]
+                },
+                "boundingBox": {
+                  "vertices": [
+                    {
+                      "x": 64,
+                      "y": 84
+                    },
+                    {
+                      "x": 136,
+                      "y": 81
+                    },
+                    {
+                      "x": 139,
+                      "y": 141
+                    },
+                    {
+                      "x": 67,
+                      "y": 144
+                    }
+                  ]
+                },
+                "words": [
+                  {
+                    "property": {
+                      "detectedLanguages": [
+                        {
+                          "languageCode": "en"
+                        }
+                      ]
+                    },
+                    "boundingBox": {
+                      "vertices": [
+                        {
+                          "x": 64,
+                          "y": 87
+                        },
+                        {
+                          "x": 107,
+                          "y": 83
+                        },
+                        {
+                          "x": 109,
+                          "y": 113
+                        },
+                        {
+                          "x": 67,
+                          "y": 117
+                        }
+                      ]
+                    },
+                    "symbols": [
+                      {
+                        "property": {
+                          "detectedLanguages": [
+                            {
+                              "languageCode": "fil"
+                            }
+                          ]
+                        },
+                        "boundingBox": {
+                          "vertices": [
+                            {
+                              "x": 64,
+                              "y": 87
+                            },
+                            {
+                              "x": 70,
+                              "y": 86
+                            },
+                            {
+                              "x": 73,
+                              "y": 116
+                            },
+                            {
+                              "x": 67,
+                              "y": 117
+                            }
+                          ]
+                        },
+                        "text": "P"
+                      },
+                      {
+                        "property": {
+                          "detectedLanguages": [
+                            {
+                              "languageCode": "fil"
+                            }
+                          ]
+                        },
+                        "boundingBox": {
+                          "vertices": [
+                            {
+                              "x": 71,
+                              "y": 86
+                            },
+                            {
+                              "x": 81,
+                              "y": 85
+                            },
+                            {
+                              "x": 84,
+                              "y": 115
+                            },
+                            {
+                              "x": 74,
+                              "y": 116
+                            }
+                          ]
+                        },
+                        "text": "L"
+                      },
+                      {
+                        "property": {
+                          "detectedLanguages": [
+                            {
+                              "languageCode": "fil"
+                            }
+                          ]
+                        },
+                        "boundingBox": {
+                          "vertices": [
+                            {
+                              "x": 82,
+                              "y": 85
+                            },
+                            {
+                              "x": 97,
+                              "y": 84
+                            },
+                            {
+                              "x": 100,
+                              "y": 114
+                            },
+                            {
+                              "x": 85,
+                              "y": 115
+                            }
+                          ]
+                        },
+                        "text": "O"
+                      },
+                      {
+                        "property": {
+                          "detectedLanguages": [
+                            {
+                              "languageCode": "fil"
+                            }
+                          ],
+                          "detectedBreak": {
+                            "type": "SPACE"
+                          }
+                        },
+                        "boundingBox": {
+                          "vertices": [
+                            {
+                              "x": 98,
+                              "y": 84
+                            },
+                            {
+                              "x": 107,
+                              "y": 83
+                            },
+                            {
+                              "x": 110,
+                              "y": 113
+                            },
+                            {
+                              "x": 101,
+                              "y": 114
+                            }
+                          ]
+                        },
+                        "text": "T"
+                      }
+                    ]
+                  },
+                  {
+                    "property": {
+                      "detectedLanguages": [
+                        {
+                          "languageCode": "en"
+                        }
+                      ]
+                    },
+                    "boundingBox": {
+                      "vertices": [
+                        {
+                          "x": 114,
+                          "y": 83
+                        },
+                        {
+                          "x": 135,
+                          "y": 81
+                        },
+                        {
+                          "x": 138,
+                          "y": 111
+                        },
+                        {
+                          "x": 117,
+                          "y": 113
+                        }
+                      ]
+                    },
+                    "symbols": [
+                      {
+                        "property": {
+                          "detectedLanguages": [
+                            {
+                              "languageCode": "fil"
+                            }
+                          ]
+                        },
+                        "boundingBox": {
+                          "vertices": [
+                            {
+                              "x": 114,
+                              "y": 83
+                            },
+                            {
+                              "x": 124,
+                              "y": 82
+                            },
+                            {
+                              "x": 127,
+                              "y": 112
+                            },
+                            {
+                              "x": 117,
+                              "y": 113
+                            }
+                          ]
+                        },
+                        "text": "T"
+                      },
+                      {
+                        "property": {
+                          "detectedLanguages": [
+                            {
+                              "languageCode": "fil"
+                            }
+                          ],
+                          "detectedBreak": {
+                            "type": "EOL_SURE_SPACE"
+                          }
+                        },
+                        "boundingBox": {
+                          "vertices": [
+                            {
+                              "x": 125,
+                              "y": 82
+                            },
+                            {
+                              "x": 135,
+                              "y": 81
+                            },
+                            {
+                              "x": 138,
+                              "y": 111
+                            },
+                            {
+                              "x": 128,
+                              "y": 112
+                            }
+                          ]
+                        },
+                        "text": "O"
+                      }
+                    ]
+                  },
+                  {
+                    "property": {
+                      "detectedLanguages": [
+                        {
+                          "languageCode": "fil"
+                        }
+                      ]
+                    },
+                    "boundingBox": {
+                      "vertices": [
+                        {
+                          "x": 85,
+                          "y": 111
+                        },
+                        {
+                          "x": 121,
+                          "y": 111
+                        },
+                        {
+                          "x": 121,
+                          "y": 141
+                        },
+                        {
+                          "x": 85,
+                          "y": 141
+                        }
+                      ]
+                    },
+                    "symbols": [
+                      {
+                        "property": {
+                          "detectedLanguages": [
+                            {
+                              "languageCode": "fil"
+                            }
+                          ]
+                        },
+                        "boundingBox": {
+                          "vertices": [
+                            {
+                              "x": 85,
+                              "y": 111
+                            },
+                            {
+                              "x": 102,
+                              "y": 111
+                            },
+                            {
+                              "x": 102,
+                              "y": 141
+                            },
+                            {
+                              "x": 85,
+                              "y": 141
+                            }
+                          ]
+                        },
+                        "text": "N"
+                      },
+                      {
+                        "property": {
+                          "detectedLanguages": [
+                            {
+                              "languageCode": "fil"
+                            }
+                          ],
+                          "detectedBreak": {
+                            "type": "EOL_SURE_SPACE"
+                          }
+                        },
+                        "boundingBox": {
+                          "vertices": [
+                            {
+                              "x": 103,
+                              "y": 111
+                            },
+                            {
+                              "x": 121,
+                              "y": 111
+                            },
+                            {
+                              "x": 121,
+                              "y": 141
+                            },
+                            {
+                              "x": 103,
+                              "y": 141
+                            }
+                          ]
+                        },
+                        "text": "G"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "blockType": "TEXT"
+          }
+        ]
+      }
+    ],
+    "text": "PLOT TO\nNG\n"
+  }
+}

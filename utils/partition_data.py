@@ -41,9 +41,28 @@ def split_data(in_data_dir: str, out_data_dir: str, ids: dict, test_size: float 
                 copyfile(in_data_dir / image_filename, image_folder_out_dir / image_filename)
 
 
-def binary_split(in_data_dir, out_data_dir, sqlite_path, sql_queries):
+def sql_split(in_data_dir, out_data_dir, sqlite_path, sql_queries):
     con = sqlite3.connect(sqlite_path)
     ids = {tag: pd.read_sql_query(query, con)['id'].to_list() for tag, query in sql_queries.items()}
+    split_data(in_data_dir, out_data_dir, ids, test_size=0.2, balance=True)
+
+
+def author_split(in_data_dir, out_data_dir, sqlite_path):
+    all_query = """
+    SELECT C.id AS id, C.author AS author
+    FROM Cartoons AS C
+    WHERE C.author != 'PlantB'
+    """
+
+    con = sqlite3.connect(sqlite_path)
+    df = pd.read_sql_query(all_query, con)
+    filtered = df.groupby('author').filter(lambda x: len(x) > 500)
+
+    grouped = filtered.groupby('author')
+    ids = {}
+    for group in grouped.groups:
+        ids[group] = grouped.get_group(group)['id'].to_list()
+
     split_data(in_data_dir, out_data_dir, ids, test_size=0.2, balance=True)
 
 
@@ -68,7 +87,7 @@ def obama_detector_split(in_data_dir, out_data_dir, sqlite_path):
         """
     }
 
-    binary_split(in_data_dir, out_data_dir, sqlite_path, sql_queries)
+    sql_split(in_data_dir, out_data_dir, sqlite_path, sql_queries)
 
 
 def all_data_obama_detector_split(in_data_dir, out_data_dir, sqlite_path):
@@ -89,11 +108,11 @@ def all_data_obama_detector_split(in_data_dir, out_data_dir, sqlite_path):
         """
     }
 
-    binary_split(in_data_dir, out_data_dir, sqlite_path, sql_queries)
+    sql_split(in_data_dir, out_data_dir, sqlite_path, sql_queries)
 
 
 def main():
-    all_data_obama_detector_split('data/clean-data', 'data/obama-detector', 'cartoons.sqlite')
+    author_split('data', 'partitioned_data/authors', 'metadata/cartoons.sqlite')
 
 
 if __name__ == '__main__':
